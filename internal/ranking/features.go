@@ -4,50 +4,39 @@ import (
 	"math"
 )
 
-// GetBM25 calculates and updates the BM25 score for each document in the provided documents
-func GetBM25(query Query, invertibleIndex InvertibleIndex, documents Documents, docStatistics TotalDocStatistics) {
-	// Iterate over each document to calculate BM25
-	for i := range documents {
-		doc := &documents[i] // Reference to modify the document in place
-
-		// Initialize BM25 score for the document
-		bm25Score := 0.0
-
-		// Iterate over each term in the query
-		for _, term := range query.Text {
-			// Calculate IDF for the term
-			df := len(invertibleIndex[string(term)]) // Document frequency
-			idf := math.Log((float64(docStatistics.DocCount)-float64(df)+0.5)/(float64(df)+0.5) + 1.0)
-
-			// Find the term in the document's index
-			termIndex := findTermIndex(doc.DocID, string(term), invertibleIndex)
-
-			// If the term is present in the document
-			if termIndex != -1 {
-				// Term frequency for this term in the document
-				tf := invertibleIndex[string(term)][termIndex].Frequency
-
-				// Length of the document
-				docLength := doc.Metadata.DocLength
-
-				// Calculate BM25 score for this term
-				bm25TermScore := idf * float64(tf) * (k1 + 1) / (float64(tf) + k1*(1-b+b*float64(docLength)/docStatistics.AvgDocLength))
-				bm25Score += bm25TermScore
-			}
-		}
-
-		// Update BM25 score in the document's features
-		doc.Features.BM25 = bm25Score
+// GenerateFeatures generates features for a document
+func (doc *Document) GenerateFeatures(query Query, invertibleIndex InvertibleIndex, docStatistics TotalDocStatistics) {
+	// Compute and set the features once
+	doc.Features = Features{
+		// Calculate features and assign them here
 	}
 }
 
-// Helper function to find the index of the term in a document's list of term occurrences
-func findTermIndex(docID string, term string, invertibleIndex InvertibleIndex) int {
-	// Iterate through the list of documents for the given term in the invertible index
-	for i, docIndex := range invertibleIndex[term] {
-		if docIndex.DocID == docID {
-			return i // Return the index of the document that contains the term
+// GetBM25 computes the BM25 score for a single document for the given query
+func GetBM25(query Query, invertibleIndex InvertibleIndex, document Document, avgDocumentLength float64) float64 {
+	// Initialize the BM25 score
+	bm25Score := 0.0
+
+	// Tokenize the query and calculate BM25 for each term
+	// You can split the query text into terms and compute BM25 for each one
+	for _, term := range query.Terms() { // Assume `Terms` is a function that splits the query into terms
+		// Look up the term in the inverted index
+		if documentIndexList, exists := invertibleIndex[term]; exists {
+			// Find the document frequency and term frequency for the term
+			for _, docIndex := range documentIndexList {
+				if docIndex.DocID == document.DocID {
+					termFrequency := docIndex.Frequency
+					documentLength := document.Metadata.DocLength
+
+					// Compute BM25 for this term
+					idf := math.Log((float64(len(invertibleIndex))-float64(len(documentIndexList))+0.5)/(float64(len(documentIndexList))+0.5) + 1.0)
+					numerator := float64(termFrequency) * (k1 + 1)
+					denominator := float64(termFrequency) + k1*(1-b+b*float64(documentLength)/avgDocumentLength)
+					bm25Score += idf * numerator / denominator
+				}
+			}
 		}
 	}
-	return -1 // Return -1 if the term is not found in the document
+
+	return bm25Score
 }
