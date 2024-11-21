@@ -24,9 +24,7 @@ func GetBM25(query Query, invertibleIndex InvertibleIndex, documentLengths map[s
 		// For each document containing the term, calculate the BM25 score
 		for _, doc := range invertibleIndex[term] {
 			docID := doc.DocID
-			// Get the term frequency in the document
 			tf := doc.Frequency
-			// Get the length of the document
 			docLength := documentLengths[docID]
 			// Calculate the BM25 score for this document and term
 			score := idf * float64(tf) * (k1 + 1) / (float64(tf) + k1*(1-b+b*float64(docLength)/avgDocumentLength))

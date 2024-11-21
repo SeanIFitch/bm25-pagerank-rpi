@@ -17,7 +17,7 @@ func GetDocumentScores(query ranking.Query) ([]ranking.Document, error) {
 	}
 
 	// Call the ranking logic from internal/rank
-	docScores, err := ranking.RankDocuments(query.Text)
+	docScores, err := ranking.RankDocuments(query)
 	if err != nil {
 		return nil, err
 	}
