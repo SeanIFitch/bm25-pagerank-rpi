@@ -6,6 +6,11 @@ import (
 
 // RankDocuments ranks the documents based on the query text
 func RankDocuments(query Query) ([]Document, error) {
+	_, err := getInvertibleIndex(query)
+	if err != nil {
+		return nil, err
+	}
+
 	// get metadata
 	// declare feature struct
 	// add each feature to the feature struct

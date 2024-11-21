@@ -1,8 +1,13 @@
 package ranking
 
+import "time"
+
 // BM25 parameters
 const k1 = 1.2
 const b = 0.75
+
+// HTTP timeout
+const httpTimeout = 10 * time.Second
 
 // Query defines the struct to parse the incoming query
 type Query struct {
