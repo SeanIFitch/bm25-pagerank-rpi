@@ -1,11 +1,10 @@
-# Makefile
-
 # Variables
 BIN_DIR := ./bin
 CMD_API := ./cmd/api/main.go
-CMD_TRAIN := ./cmd/train/main.go
+CMD_TRAIN := ./cmd/training/main.go
 API_BIN := $(BIN_DIR)/api
 TRAIN_BIN := $(BIN_DIR)/train
+TEST_DIR := ./test
 
 # Default target (optional)
 .PHONY: all
@@ -15,7 +14,13 @@ all: build
 .PHONY: test
 test:
 	@echo "Running all tests..."
-	go test ./...
+	go test -v ./...
+
+# Run tests for specific package (e.g., ranking)
+.PHONY: test-ranking
+test-ranking:
+	@echo "Running ranking tests..."
+	go test -v $(TEST_DIR)/ranking
 
 # Build the binaries for the API and training commands
 .PHONY: build

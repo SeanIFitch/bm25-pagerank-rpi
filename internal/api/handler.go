@@ -9,26 +9,20 @@ import (
 	"rpi-search-ranking/internal/ranking"
 )
 
-// Query defines the struct to parse the incoming query
-type Query struct {
-	QueryID   string `json:"queryID"`
-	QueryText string `json:"queryText"`
-}
-
 // GetDocumentScores returns the scores and metadata for relevant documents based on the query
-func GetDocumentScores(query Query) ([]ranking.Document, error) {
+func GetDocumentScores(query ranking.Query) ([]ranking.Document, error) {
 	// Validate the query text
-	if query.QueryText == "" {
+	if query.Text == "" {
 		return nil, errors.New("query text cannot be empty")
 	}
 
 	// Call the ranking logic from internal/rank
-	docScores, err := ranking.RankDocuments(query.QueryText)
+	docScores, err := ranking.RankDocuments(query.Text)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Processed query ID: %s, Query Text: %s", query.QueryID, query.QueryText)
+	log.Printf("Processed query ID: %s, Query Text: %s", query.Id, query.Text)
 
 	// Return the document scores
 	return docScores, nil
@@ -37,7 +31,7 @@ func GetDocumentScores(query Query) ([]ranking.Document, error) {
 // getDocumentScoresHandler handles the /getDocumentScores API endpoint
 func getDocumentScoresHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the user query from the request body
-	var query Query
+	var query ranking.Query
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

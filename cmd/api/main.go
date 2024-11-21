@@ -74,7 +74,7 @@ func getDocumentScores(w http.ResponseWriter, r *http.Request) {
 
 	// Validate the query
 	if query.QueryID == "" || query.QueryText == "" {
-		http.Error(w, "QueryID and QueryText are required", http.StatusBadRequest)
+		http.Error(w, "Id and Text are required", http.StatusBadRequest)
 		return
 	}
 
