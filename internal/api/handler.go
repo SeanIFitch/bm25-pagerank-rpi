@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
+	"rpi-search-ranking/internal/ranking"
 )
 
 // Query defines the struct to parse the incoming query
@@ -21,37 +23,31 @@ type DocumentScore struct {
 
 // GetDocumentScores returns the scores and metadata for relevant documents based on the query
 func GetDocumentScores(query Query) ([]DocumentScore, error) {
-	// This is where you would implement the logic to process the query and rank documents
-	// For this example, we are returning mock data.
-
+	// Validate the query text
 	if query.QueryText == "" {
 		return nil, errors.New("query text cannot be empty")
 	}
 
-	// Example mock data for document scores and metadata
-	docScores := []DocumentScore{
-		{
-			DocID: "12345",
-			Rank:  5,
-			Metadata: map[string]interface{}{
-				"title":  "Document 1",
-				"author": "Author 1",
-			},
-		},
-		{
-			DocID: "67890",
-			Rank:  3,
-			Metadata: map[string]interface{}{
-				"title":  "Document 2",
-				"author": "Author 2",
-			},
-		},
+	// Call the ranking logic from internal/rank
+	docScores, err := ranking.RankDocuments(query.QueryText)
+	if err != nil {
+		return nil, err
+	}
+
+	// Process and format the result
+	var result []DocumentScore
+	for _, doc := range docScores {
+		result = append(result, DocumentScore{
+			DocID:    doc.DocID,
+			Rank:     doc.Rank,
+			Metadata: doc.Metadata,
+		})
 	}
 
 	log.Printf("Processed query: %s", query.QueryText)
 
 	// Return the document scores
-	return docScores, nil
+	return result, nil
 }
 
 // getDocumentScoresHandler handles the /getDocumentScores API endpoint
