@@ -27,20 +27,10 @@ func GetDocumentScores(query Query) ([]ranking.Document, error) {
 		return nil, err
 	}
 
-	// Process and format the result
-	var result []ranking.Document
-	for _, doc := range docScores {
-		result = append(result, ranking.Document{
-			DocID:    doc.DocID,
-			Rank:     doc.Rank,
-			Metadata: doc.Metadata,
-		})
-	}
-
 	log.Printf("Processed query: %s", query.QueryText)
 
 	// Return the document scores
-	return result, nil
+	return docScores, nil
 }
 
 // getDocumentScoresHandler handles the /getDocumentScores API endpoint
