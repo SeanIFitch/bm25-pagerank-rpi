@@ -6,10 +6,8 @@ import (
 
 // GenerateFeatures generates features for a document
 func (doc *Document) GenerateFeatures(query Query, invertibleIndex InvertibleIndex, docStatistics TotalDocStatistics) {
-	// Compute and set the features once
-	doc.Features = Features{
-		// Calculate features and assign them here
-	}
+	// Generate BM25 score and set it in the Features struct
+	doc.Features.BM25 = GetBM25(query, invertibleIndex, *doc, docStatistics.AvgDocLength)
 }
 
 // GetBM25 computes the BM25 score for a single document for the given query

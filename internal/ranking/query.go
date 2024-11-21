@@ -7,7 +7,7 @@ import (
 
 // Terms returns a slice of terms (tokens) extracted from the query's text.
 // It processes the text by lowercasing and removing punctuation.
-func (q *Query) Terms() []string {
+func (q Query) Terms() []string {
 	// Convert the query text to lowercase
 	text := strings.ToLower(q.Text)
 
