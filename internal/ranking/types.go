@@ -1,7 +1,7 @@
 package ranking
 
 // BM25 parameters
-const k1 = 1.5
+const k1 = 1.2
 const b = 0.75
 
 // Query defines the struct to parse the incoming query
@@ -15,7 +15,10 @@ type Document struct {
 	DocID    string           `json:"docID"`
 	Rank     int              `json:"rank"`
 	Metadata DocumentMetadata `json:"metadata"`
+	Features Features
 }
+
+type Documents []Document
 
 // DocumentMetadata holds metadata information about a document
 type DocumentMetadata struct {

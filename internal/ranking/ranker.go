@@ -6,6 +6,10 @@ import (
 
 // RankDocuments ranks the documents based on the query text
 func RankDocuments(query Query) ([]Document, error) {
+	// get metadata
+	// declare feature struct
+	// add each feature to the feature struct
+
 	// Example documents
 	docScores := []Document{
 		{

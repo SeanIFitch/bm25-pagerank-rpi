@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"rpi-search-ranking/internal/ranking"
 	"syscall"
 	"time"
 
@@ -66,14 +67,14 @@ func loggingMiddleware(next http.Handler) http.Handler {
 // Handler function for the /getDocumentScores endpoint
 func getDocumentScores(w http.ResponseWriter, r *http.Request) {
 	// Parse the user query from the request body
-	var query api.Query
+	var query ranking.Query
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Validate the query
-	if query.QueryID == "" || query.QueryText == "" {
+	if query.Id == "" || query.Text == "" {
 		http.Error(w, "Id and Text are required", http.StatusBadRequest)
 		return
 	}
