@@ -14,15 +14,8 @@ type Query struct {
 	QueryText string `json:"queryText"`
 }
 
-// DocumentScore represents a document's score and metadata
-type DocumentScore struct {
-	DocID    string                 `json:"docID"`
-	Rank     int                    `json:"rank"`
-	Metadata map[string]interface{} `json:"metadata"`
-}
-
 // GetDocumentScores returns the scores and metadata for relevant documents based on the query
-func GetDocumentScores(query Query) ([]DocumentScore, error) {
+func GetDocumentScores(query Query) ([]ranking.Document, error) {
 	// Validate the query text
 	if query.QueryText == "" {
 		return nil, errors.New("query text cannot be empty")
@@ -35,9 +28,9 @@ func GetDocumentScores(query Query) ([]DocumentScore, error) {
 	}
 
 	// Process and format the result
-	var result []DocumentScore
+	var result []ranking.Document
 	for _, doc := range docScores {
-		result = append(result, DocumentScore{
+		result = append(result, ranking.Document{
 			DocID:    doc.DocID,
 			Rank:     doc.Rank,
 			Metadata: doc.Metadata,
