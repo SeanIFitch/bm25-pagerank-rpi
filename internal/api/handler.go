@@ -11,6 +11,7 @@ import (
 
 // Query defines the struct to parse the incoming query
 type Query struct {
+	QueryID   string `json:"queryID"`
 	QueryText string `json:"queryText"`
 }
 
@@ -27,7 +28,7 @@ func GetDocumentScores(query Query) ([]ranking.Document, error) {
 		return nil, err
 	}
 
-	log.Printf("Processed query: %s", query.QueryText)
+	log.Printf("Processed query ID: %s, Query Text: %s", query.QueryID, query.QueryText)
 
 	// Return the document scores
 	return docScores, nil
