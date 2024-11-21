@@ -17,10 +17,11 @@ type Query struct {
 
 // Document represents a document with its ID, rank, and metadata
 type Document struct {
-	DocID    string           `json:"docID"`
-	Rank     int              `json:"rank"`
-	Metadata DocumentMetadata `json:"metadata"`
-	Features Features
+	DocID           string           `json:"docID"`
+	Rank            int              `json:"rank"`
+	Metadata        DocumentMetadata `json:"metadata"`
+	TermFrequencies map[string]int
+	Features        Features
 }
 
 type Documents []Document
