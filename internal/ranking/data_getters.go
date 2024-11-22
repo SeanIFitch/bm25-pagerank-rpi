@@ -14,7 +14,7 @@ func getInvertibleIndex(query Query) (InvertibleIndex, error) {
 	uniqueTerms := make(map[string]struct{})
 
 	// Iterate over each term in the query
-	for _, term := range query.Terms() {
+	for _, term := range query.Terms {
 		// If the term has not been processed yet, process it
 		if _, exists := uniqueTerms[term]; !exists {
 			// Mark the term as processed

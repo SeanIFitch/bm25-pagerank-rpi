@@ -11,8 +11,9 @@ const httpTimeout = 10 * time.Second
 
 // Query defines the struct to parse the incoming query
 type Query struct {
-	Id   string `json:"queryID"`
-	Text string `json:"queryText"`
+	Id    string `json:"queryID"`
+	Text  string `json:"queryText"`
+	Terms []string
 }
 
 // Document represents a document with its ID, rank, and metadata
@@ -58,7 +59,7 @@ type Features struct {
 	VarianceStreamLengthNormalizedTF float64 // Variance of stream length normalized term frequency
 
 	// Inverse Document Frequency (IDF)
-	IDF           float64 // IDF for the query term
+	// IDF           float64 // IDF for the query term (is constant)
 	SumTFIDF      float64 // Sum of tf*idf for all relevant documents
 	MinTFIDF      float64 // Minimum tf*idf value
 	MaxTFIDF      float64 // Maximum tf*idf value

@@ -6,6 +6,8 @@ import (
 
 // RankDocuments ranks the documents based on the query text
 func RankDocuments(query Query) ([]Document, error) {
+	query.Tokenize()
+
 	// Get invertible index for the query
 	index, err := getInvertibleIndex(query)
 	if err != nil {
@@ -28,7 +30,7 @@ func RankDocuments(query Query) ([]Document, error) {
 			return nil, err
 		}
 
-		err = document.ComputeFeatures(query, docStatistics)
+		err = document.ComputeFeatures(query, docStatistics, index)
 		if err != nil {
 			return nil, err
 		}
