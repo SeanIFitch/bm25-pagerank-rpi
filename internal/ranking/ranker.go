@@ -6,38 +6,34 @@ import (
 
 // RankDocuments ranks the documents based on the query text
 func RankDocuments(query Query) ([]Document, error) {
+	// Get invertible index for the query
 	index, err := getInvertibleIndex(query)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = GetDocuments(index)
+	// Get slice of all relevant documents
+	documents, err := GetDocuments(index)
 	if err != nil {
 		return nil, err
 	}
 
-	// get metadata
-	// declare feature struct
-	// add each feature to the feature struct
-
-	// Example documents
-	docScores := []Document{
-		{
-			DocID:    "12345",
-			Rank:     5,
-			Metadata: DocumentMetadata{},
-		},
-		{
-			DocID:    "67890",
-			Rank:     3,
-			Metadata: DocumentMetadata{},
-		},
+	// Add document metadata
+	for _, document := range documents {
+		document.Metadata, err = fetchDocumentMetadata(document.DocID)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	// add each feature to the feature struct
+	// sort
+	// rank
 
 	log.Printf("Ranked documents for query: %s", query)
 
 	// Return the ranked documents
-	return docScores, nil
+	return documents, nil
 }
 
 // GetDocuments returns a slice of all documents in the InvertibleIndex
