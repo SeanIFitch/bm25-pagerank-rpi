@@ -31,7 +31,7 @@ type Documents []Document
 type DocumentMetadata struct {
 	DocLength       int    `json:"docLength"`
 	TimeLastUpdated string `json:"timeLastUpdated"`
-	FileType        string `json:"fileType"`
+	FileType        string `json:"docType"`
 	ImageCount      int    `json:"imageCount"`
 	DocTitle        string `json:"docTitle"`
 	URL             string `json:"URL"`
