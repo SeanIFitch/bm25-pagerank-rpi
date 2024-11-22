@@ -79,18 +79,18 @@ type Features struct {
 	PageRank     float64 // PageRank score
 }
 
-// DocumentIndex represents a document and the frequency and positions of a term in that document
-type DocumentIndex struct {
+// documentIndex represents a document and the frequency and positions of a term in that document
+type documentIndex struct {
 	DocID     string `json:"docID"`
 	Frequency int    `json:"frequency"`
 	Positions []int  `json:"positions"`
 }
 
-// InvertibleIndex represents the inverted index structure, mapping a term to its list of document occurrences
-type InvertibleIndex map[string][]DocumentIndex
+// invertibleIndex represents the inverted index structure, mapping a term to its list of document occurrences
+type invertibleIndex map[string][]documentIndex
 
-// TotalDocStatistics represents the statistics for all documents in the database returned by getTotalDocStatistics
-type TotalDocStatistics struct {
+// totalDocStatistics represents the statistics for all documents in the database returned by getTotalDocStatistics
+type totalDocStatistics struct {
 	AvgDocLength float64 `json:"avgDocLength"`
 	DocCount     int     `json:"docCount"`
 }

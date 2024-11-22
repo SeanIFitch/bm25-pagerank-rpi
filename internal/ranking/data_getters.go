@@ -7,9 +7,9 @@ import (
 )
 
 // getInvertibleIndex fetches the unique inverted index for all terms in the given query.
-func getInvertibleIndex(query Query) (InvertibleIndex, error) {
+func getInvertibleIndex(client *http.Client, query Query) (invertibleIndex, error) {
 	// Initialize the index and a map to track unique terms
-	index := InvertibleIndex{}
+	index := invertibleIndex{}
 	uniqueTerms := make(map[string]struct{})
 
 	// Iterate over each term in the query
@@ -20,7 +20,7 @@ func getInvertibleIndex(query Query) (InvertibleIndex, error) {
 			uniqueTerms[term] = struct{}{}
 
 			// Fetch the inverted index for this term
-			invertedIndex, err := fetchInvertibleIndexForTerm(term)
+			invertedIndex, err := fetchInvertibleIndexForTerm(client, term)
 			if err != nil {
 				return nil, err
 			}
@@ -32,15 +32,10 @@ func getInvertibleIndex(query Query) (InvertibleIndex, error) {
 	return index, nil
 }
 
-// fetchInvertibleIndex retrieves the inverted index for a given term from the Indexing API
-func fetchInvertibleIndexForTerm(term string) ([]DocumentIndex, error) {
+// fetchInvertibleIndexForTerm retrieves the inverted index for a given term from the Indexing API
+func fetchInvertibleIndexForTerm(client *http.Client, term string) ([]documentIndex, error) {
 	// Construct the API URL using the term as a query parameter
-	apiURL := fmt.Sprintf("http://your-api-url.com/get-invertible-index?term=%s", term)
-
-	// Create a new HTTP client with a timeout of 10 seconds
-	client := &http.Client{
-		Timeout: httpTimeout,
-	}
+	apiURL := fmt.Sprintf("http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=%s", term)
 
 	// Make the HTTP GET request to fetch the inverted index
 	resp, err := client.Get(apiURL)
@@ -57,7 +52,7 @@ func fetchInvertibleIndexForTerm(term string) ([]DocumentIndex, error) {
 	// Decode the JSON response from the API into a struct
 	var result struct {
 		Term  string          `json:"term"`
-		Index []DocumentIndex `json:"index"`
+		Index []documentIndex `json:"index"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -69,14 +64,9 @@ func fetchInvertibleIndexForTerm(term string) ([]DocumentIndex, error) {
 }
 
 // fetchDocumentMetadata retrieves the metadata for a given document ID from the Indexing API
-func fetchDocumentMetadata(docID string) (DocumentMetadata, error) {
+func fetchDocumentMetadata(client *http.Client, docID string) (DocumentMetadata, error) {
 	// Construct the API URL using the document ID as a query parameter
-	apiURL := fmt.Sprintf("http://your-api-url.com/get-document-metadata?docID=%s", docID)
-
-	// Create a new HTTP client with a timeout of 10 seconds
-	client := &http.Client{
-		Timeout: httpTimeout,
-	}
+	apiURL := fmt.Sprintf("http://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=%s", docID)
 
 	// Make the HTTP GET request to fetch the document metadata
 	resp, err := client.Get(apiURL)
@@ -105,31 +95,26 @@ func fetchDocumentMetadata(docID string) (DocumentMetadata, error) {
 }
 
 // fetchTotalDocStatistics retrieves the total document statistics from the Indexing API
-func fetchTotalDocStatistics() (TotalDocStatistics, error) {
+func fetchTotalDocStatistics(client *http.Client) (totalDocStatistics, error) {
 	// Construct the API URL
-	apiURL := "http://your-api-url.com/get-total-doc-statistics"
-
-	// Create a new HTTP client with a timeout of 10 seconds
-	client := &http.Client{
-		Timeout: httpTimeout,
-	}
+	apiURL := "http://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics"
 
 	// Make the HTTP GET request to fetch the total document statistics
 	resp, err := client.Get(apiURL)
 	if err != nil {
-		return TotalDocStatistics{}, fmt.Errorf("failed to make request: %v", err)
+		return totalDocStatistics{}, fmt.Errorf("failed to make request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {
-		return TotalDocStatistics{}, fmt.Errorf("failed to fetch total document statistics: %v", resp.Status)
+		return totalDocStatistics{}, fmt.Errorf("failed to fetch total document statistics: %v", resp.Status)
 	}
 
 	// Decode the JSON response from the API into a struct
-	var stats TotalDocStatistics
+	var stats totalDocStatistics
 	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
-		return TotalDocStatistics{}, fmt.Errorf("failed to decode response: %v", err)
+		return totalDocStatistics{}, fmt.Errorf("failed to decode response: %v", err)
 	}
 
 	// Return the parsed statistics

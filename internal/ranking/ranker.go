@@ -2,38 +2,44 @@ package ranking
 
 import (
 	"log"
+	"net/http"
 )
 
 // RankDocuments ranks the documents based on the query text
 func RankDocuments(query Query) ([]Document, error) {
-	query.Tokenize()
+	query.tokenize()
+
+	// Create a new HTTP client
+	client := &http.Client{
+		Timeout: httpTimeout,
+	}
 
 	// Get invertible index for the query
-	index, err := getInvertibleIndex(query)
+	index, err := getInvertibleIndex(client, query)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get slice of all relevant documents
-	documents, err := GetDocuments(index)
+	documents, err := getDocuments(index)
 	if err != nil {
 		return nil, err
 	}
 
 	// Count and avg length of all documents
-	docStatistics, err := fetchTotalDocStatistics()
+	docStatistics, err := fetchTotalDocStatistics(client)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Add document metadata and features
 	for _, document := range documents {
-		document.Metadata, err = fetchDocumentMetadata(document.DocID)
+		document.Metadata, err = fetchDocumentMetadata(client, document.DocID)
 		if err != nil {
 			return nil, err
 		}
 
-		err = document.ComputeFeatures(query, docStatistics, index)
+		err = document.computeFeatures(query, docStatistics, index)
 		if err != nil {
 			return nil, err
 		}
@@ -49,8 +55,8 @@ func RankDocuments(query Query) ([]Document, error) {
 	return documents, nil
 }
 
-// GetDocuments returns a slice of all documents in the InvertibleIndex
-func GetDocuments(index InvertibleIndex) ([]Document, error) {
+// getDocuments returns a slice of all documents in the invertibleIndex
+func getDocuments(index invertibleIndex) ([]Document, error) {
 	// Map to store aggregated term frequencies for each document
 	documentsMap := make(map[string]Document)
 

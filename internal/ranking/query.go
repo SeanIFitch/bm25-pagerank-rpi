@@ -4,6 +4,6 @@ import (
 	"strings"
 )
 
-func (q *Query) Tokenize() {
+func (q *Query) tokenize() {
 	q.Terms = strings.Fields(q.Text)
 }

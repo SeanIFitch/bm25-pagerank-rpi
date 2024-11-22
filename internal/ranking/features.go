@@ -2,12 +2,12 @@ package ranking
 
 import "math"
 
-// ComputeFeatures generates features for a document
-func (doc *Document) ComputeFeatures(query Query, docStatistics TotalDocStatistics, index InvertibleIndex) error {
-	idf := GetIDF(index, docStatistics.DocCount)
+// computeFeatures generates features for a document
+func (doc *Document) computeFeatures(query Query, docStatistics totalDocStatistics, index invertibleIndex) error {
+	idf := getIDF(index, docStatistics.DocCount)
 
 	// Generate BM25 score
-	bm25, err := doc.GetBM25(query, docStatistics, idf)
+	bm25, err := doc.getBM25(query, docStatistics, idf)
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func (doc *Document) ComputeFeatures(query Query, docStatistics TotalDocStatisti
 	return nil
 }
 
-func GetIDF(index InvertibleIndex, totalDocCount int) map[string]float64 {
+func getIDF(index invertibleIndex, totalDocCount int) map[string]float64 {
 	idf := make(map[string]float64)
 	for term, postings := range index {
 		docFrequency := len(postings)
@@ -26,7 +26,7 @@ func GetIDF(index InvertibleIndex, totalDocCount int) map[string]float64 {
 	return idf
 }
 
-func (doc *Document) GetBM25(query Query, docStatistics TotalDocStatistics, idf map[string]float64) (float64, error) {
+func (doc *Document) getBM25(query Query, docStatistics totalDocStatistics, idf map[string]float64) (float64, error) {
 	var bm25Score float64
 
 	// Loop over query terms and calculate BM25 contributions
