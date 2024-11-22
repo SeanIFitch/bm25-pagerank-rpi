@@ -21,8 +21,11 @@ func RankDocuments(query Query) ([]Document, error) {
 	}
 
 	// Count and avg length of all documents
-	docStatistics := fetchTotalDocStatistics()
-
+	docStatistics, err := fetchTotalDocStatistics()
+	if err != nil {
+		return nil, err
+	}
+	
 	// Add document metadata and features
 	for _, document := range documents {
 		document.Metadata, err = fetchDocumentMetadata(document.DocID)

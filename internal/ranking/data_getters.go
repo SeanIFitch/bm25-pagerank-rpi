@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // getInvertibleIndex fetches the unique inverted index for all terms in the given query.
@@ -76,7 +75,7 @@ func fetchDocumentMetadata(docID string) (DocumentMetadata, error) {
 
 	// Create a new HTTP client with a timeout of 10 seconds
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: httpTimeout,
 	}
 
 	// Make the HTTP GET request to fetch the document metadata
@@ -103,4 +102,36 @@ func fetchDocumentMetadata(docID string) (DocumentMetadata, error) {
 
 	// Return the parsed metadata for the document
 	return result.Metadata, nil
+}
+
+// fetchTotalDocStatistics retrieves the total document statistics from the Indexing API
+func fetchTotalDocStatistics() (TotalDocStatistics, error) {
+	// Construct the API URL
+	apiURL := "http://your-api-url.com/get-total-doc-statistics"
+
+	// Create a new HTTP client with a timeout of 10 seconds
+	client := &http.Client{
+		Timeout: httpTimeout,
+	}
+
+	// Make the HTTP GET request to fetch the total document statistics
+	resp, err := client.Get(apiURL)
+	if err != nil {
+		return TotalDocStatistics{}, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Ensure the response status code is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return TotalDocStatistics{}, fmt.Errorf("failed to fetch total document statistics: %v", resp.Status)
+	}
+
+	// Decode the JSON response from the API into a struct
+	var stats TotalDocStatistics
+	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
+		return TotalDocStatistics{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	// Return the parsed statistics
+	return stats, nil
 }
