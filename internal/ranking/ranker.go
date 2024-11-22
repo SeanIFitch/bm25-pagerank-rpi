@@ -18,9 +18,17 @@ func RankDocuments(query Query) ([]Document, error) {
 		return nil, err
 	}
 
-	// Add document metadata
+	// Count and avg length of all documents
+	docStatistics := fetchTotalDocStatistics()
+
+	// Add document metadata and features
 	for _, document := range documents {
 		document.Metadata, err = fetchDocumentMetadata(document.DocID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = document.ComputeFeatures(query, docStatistics)
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +59,6 @@ func GetDocuments(index InvertibleIndex) ([]Document, error) {
 				doc = Document{
 					DocID:           docIndex.DocID,
 					TermFrequencies: make(map[string]int),
-					Features:        Features{}, // Placeholder; features can be calculated later
 				}
 			}
 
