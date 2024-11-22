@@ -1,137 +1,137 @@
-package ranking
+package ranking_test
 
 import (
+	"math"
 	"rpi-search-ranking/internal/ranking"
 	"testing"
 )
 
-// Mock Data for Tests
-func mockQuery() ranking.Query {
-	return ranking.Query{
-		Id:   "query1",
-		Text: "document retrieval",
+func TestGetIDF(t *testing.T) {
+	index := ranking.InvertibleIndex{
+		"term1": {{DocID: "doc1", Frequency: 2}, {DocID: "doc2", Frequency: 1}},
+		"term2": {{DocID: "doc3", Frequency: 1}},
+	}
+	totalDocCount := 5
+
+	expectedIDF := map[string]float64{
+		"term1": math.Log(float64(totalDocCount) / float64(2+1)), // Smoothed IDF
+		"term2": math.Log(float64(totalDocCount) / float64(1+1)), // Smoothed IDF
+	}
+
+	idf := ranking.GetIDF(index, totalDocCount)
+
+	for term, expected := range expectedIDF {
+		if math.Abs(idf[term]-expected) > 1e-6 {
+			t.Errorf("IDF for term %s was incorrect, got: %f, want: %f", term, idf[term], expected)
+		}
+	}
+
+	// Test for terms not in index
+	if _, exists := idf["nonexistent"]; exists {
+		t.Errorf("IDF should not include nonexistent terms")
 	}
 }
 
-func mockDocument() ranking.Document {
-	return ranking.Document{
-		DocID: "doc1",
-		Rank:  1,
-		Metadata: ranking.DocumentMetadata{
-			DocLength: 100,
-		},
-		Features: ranking.Features{},
-	}
-}
-
-func mockInvertibleIndex() ranking.InvertibleIndex {
-	return ranking.InvertibleIndex{
-		"document": {
-			{
-				DocID:     "doc1",
-				Frequency: 2,
-				Positions: []int{1, 5},
-			},
-			{
-				DocID:     "doc2",
-				Frequency: 3,
-				Positions: []int{3, 6, 9},
-			},
-		},
-		"retrieval": {
-			{
-				DocID:     "doc1",
-				Frequency: 1,
-				Positions: []int{2},
-			},
-		},
-	}
-}
-
-func mockDocStatistics() ranking.TotalDocStatistics {
-	return ranking.TotalDocStatistics{
-		AvgDocLength: 120.0,
-		DocCount:     2,
-	}
-}
-
-// Test the BM25 score calculation for a document
 func TestGetBM25(t *testing.T) {
-	query := mockQuery()
-	document := mockDocument()
-	invertibleIndex := mockInvertibleIndex()
-	docStatistics := mockDocStatistics()
-
-	// Generate Features for the document
-	document.GenerateFeatures(query, invertibleIndex, docStatistics)
-
-	// Manually calculate expected BM25 score based on the formula
-	// In this example, you may want to use a known expected value.
-	//expectedBM25 := 0.0
-
-	// Example calculation for BM25
-	// BM25 score depends on the term frequencies and document frequencies
-	// So you'll want to adjust the expected value based on the BM25 formula
-	// You can test the formula with smaller values and print them out for inspection.
-	// Here we'll assume you compute the BM25 for "document" and "retrieval" terms.
-	// This is a simplified expected value for demonstration purposes.
-
-	if document.Features.BM25 <= 0 {
-		t.Errorf("BM25 score should be greater than 0, got: %f", document.Features.BM25)
+	// Mock inputs
+	query := ranking.Query{Terms: []string{"term1", "term2"}}
+	docStatistics := ranking.TotalDocStatistics{
+		AvgDocLength: 100.0,
+		DocCount:     5,
+	}
+	idf := map[string]float64{
+		"term1": 1.2,
+		"term2": 0.8,
 	}
 
-	// For more precise tests, you can compute the expected value manually
-	// and check if the BM25 computation is accurate with different inputs.
-}
-
-// Test GetBM25 with empty query
-func TestGetBM25_EmptyQuery(t *testing.T) {
-	query := ranking.Query{Id: "empty_query", Text: ""}
-	document := mockDocument()
-	invertibleIndex := mockInvertibleIndex()
-	docStatistics := mockDocStatistics()
-
-	// Generate Features for the document
-	document.GenerateFeatures(query, invertibleIndex, docStatistics)
-
-	// BM25 score should be 0 as no terms are in the query
-	if document.Features.BM25 != 0 {
-		t.Errorf("BM25 score for empty query should be 0, got: %f", document.Features.BM25)
+	// Mock document
+	doc := ranking.Document{
+		DocID: "doc1",
+		Metadata: ranking.DocumentMetadata{
+			DocLength: 120,
+		},
+		TermFrequencies: map[string]int{
+			"term1": 3,
+			"term2": 1,
+		},
 	}
-}
 
-// Test GetBM25 with no matching terms in the document
-func TestGetBM25_NoMatchingTerms(t *testing.T) {
-	query := ranking.Query{Id: "query_no_match", Text: "nonexistent term"}
-	document := mockDocument()
-	invertibleIndex := mockInvertibleIndex()
-	docStatistics := mockDocStatistics()
+	// Set BM25 parameters
+	k1 := 1.5
+	b := 0.75
 
-	// Generate Features for the document
-	document.GenerateFeatures(query, invertibleIndex, docStatistics)
+	// Expected BM25 calculation
+	expectedBM25 := 0.0
+	{
+		// term1 calculation
+		tf := 3
+		idfValue := 1.2
+		numerator := float64(tf) * (k1 + 1)
+		denominator := float64(tf) + k1*(1-b+b*(120.0/100.0))
+		expectedBM25 += idfValue * (numerator / denominator)
 
-	// BM25 score should be 0 as there are no matching terms
-	if document.Features.BM25 != 0 {
-		t.Errorf("BM25 score for no matching terms should be 0, got: %f", document.Features.BM25)
+		// term2 calculation
+		tf = 1
+		idfValue = 0.8
+		numerator = float64(tf) * (k1 + 1)
+		denominator = float64(tf) + k1*(1-b+b*(120.0/100.0))
+		expectedBM25 += idfValue * (numerator / denominator)
+	}
+
+	// Call the GetBM25 function
+	actualBM25, err := doc.GetBM25(query, docStatistics, idf)
+	if err != nil {
+		t.Fatalf("GetBM25 returned an error: %v", err)
+	}
+
+	// Verify the result
+	if math.Abs(actualBM25-expectedBM25) > 1e-6 {
+		t.Errorf("BM25 score was incorrect, got: %f, want: %f", actualBM25, expectedBM25)
 	}
 }
 
-// Test GetBM25 with multiple documents in the inverted index
-func TestGetBM25_MultipleDocuments(t *testing.T) {
-	query := ranking.Query{Id: "query_multiple", Text: "document retrieval"}
-	document := mockDocument()
-	invertibleIndex := mockInvertibleIndex()
-	docStatistics := mockDocStatistics()
+func TestGetBM25_MissingTerm(t *testing.T) {
+	// Mock inputs
+	query := ranking.Query{Terms: []string{"term1", "term3"}}
+	docStatistics := ranking.TotalDocStatistics{
+		AvgDocLength: 100.0,
+		DocCount:     5,
+	}
+	idf := map[string]float64{
+		"term1": 1.2,
+	}
 
-	// Generate Features for the document
-	document.GenerateFeatures(query, invertibleIndex, docStatistics)
+	// Mock document
+	doc := ranking.Document{
+		DocID: "doc1",
+		Metadata: ranking.DocumentMetadata{
+			DocLength: 120,
+		},
+		TermFrequencies: map[string]int{
+			"term1": 3,
+		},
+	}
 
-	// BM25 score will depend on the term frequency and document frequency
-	// The actual expected value should be manually computed based on the formula
-	//expectedBM25 := 0.0 // Update with expected value based on your formula
+	// Call the GetBM25 function
+	actualBM25, err := doc.GetBM25(query, docStatistics, idf)
+	if err != nil {
+		t.Fatalf("GetBM25 returned an error: %v", err)
+	}
 
-	// Compare the BM25 score
-	//if document.Features.BM25 != expectedBM25 {
-	//	t.Errorf("Expected BM25 score %f, got: %f", expectedBM25, document.Features.BM25)
-	//}
+	// Verify the result (term3 is missing in both document and idf)
+	expectedBM25 := 0.0
+	{
+		// term1 calculation
+		tf := 3
+		idfValue := 1.2
+		k1 := 1.5
+		b := 0.75
+		numerator := float64(tf) * (k1 + 1)
+		denominator := float64(tf) + k1*(1-b+b*(120.0/100.0))
+		expectedBM25 += idfValue * (numerator / denominator)
+	}
+
+	if math.Abs(actualBM25-expectedBM25) > 1e-6 {
+		t.Errorf("BM25 score with missing term was incorrect, got: %f, want: %f", actualBM25, expectedBM25)
+	}
 }

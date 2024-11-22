@@ -1,1 +1,1 @@
-package ranking
+package ranking_test

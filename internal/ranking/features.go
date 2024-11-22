@@ -4,7 +4,7 @@ import "math"
 
 // ComputeFeatures generates features for a document
 func (doc *Document) ComputeFeatures(query Query, docStatistics TotalDocStatistics, index InvertibleIndex) error {
-	idf := getIDF(index, docStatistics.DocCount)
+	idf := GetIDF(index, docStatistics.DocCount)
 
 	// Generate BM25 score
 	bm25, err := doc.GetBM25(query, docStatistics, idf)
@@ -17,7 +17,7 @@ func (doc *Document) ComputeFeatures(query Query, docStatistics TotalDocStatisti
 	return nil
 }
 
-func getIDF(index InvertibleIndex, totalDocCount int) map[string]float64 {
+func GetIDF(index InvertibleIndex, totalDocCount int) map[string]float64 {
 	idf := make(map[string]float64)
 	for term, postings := range index {
 		docFrequency := len(postings)
