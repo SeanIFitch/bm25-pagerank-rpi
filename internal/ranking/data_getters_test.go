@@ -55,14 +55,14 @@ func Test_getInvertibleIndex(t *testing.T) {
 			args: args{
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
                             "term": "testterm1",
                             "index": [
                                 {"docID": "doc1", "frequency": 3, "positions": [1, 4, 7]},
                                 {"docID": "doc2", "frequency": 2, "positions": [2, 5]}
                             ]
                         }`,
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": `{
                             "term": "testterm2",
                             "index": [
                                 {"docID": "doc3", "frequency": 1, "positions": [8]}
@@ -90,16 +90,16 @@ func Test_getInvertibleIndex(t *testing.T) {
 			args: args{
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
                             "term": "testterm1",
                             "index": [
                                 {"docID": "doc1", "frequency": 3, "positions": [1, 4, 7]}
                             ]
                         }`,
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": "",
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": "",
 					},
 					map[string]error{
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": fmt.Errorf("network error"),
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm2": fmt.Errorf("network error"),
 					},
 					http.StatusOK,
 				),
@@ -126,7 +126,7 @@ func Test_getInvertibleIndex(t *testing.T) {
 			args: args{
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm1": `{
                             "term": "testterm1",
                             "index": [
                                 {"docID": "doc1", "frequency": 3, "positions": [1, 4, 7]}
@@ -177,7 +177,7 @@ func Test_fetchInvertibleIndexForTerm(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{
 						// Use the full URL for the term "testterm"
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=testterm": `{
                             "term": "testterm", 
                             "index": [
                                 {"docID": "doc1", "frequency": 2, "positions": [5, 15]},
@@ -202,7 +202,7 @@ func Test_fetchInvertibleIndexForTerm(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{}, // No responses
 					map[string]error{
-						"http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=errorterm": fmt.Errorf("network error"),
+						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=errorterm": fmt.Errorf("network error"),
 					},
 					http.StatusOK,
 				),
@@ -256,7 +256,7 @@ func Test_fetchDocumentMetadata(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{
 						// Use the full URL for the docID "12345"
-						"http://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=12345": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=12345": `{
 							"docID": "12345",
 							"metadata": {
 								"docLength": 2450,
@@ -289,7 +289,7 @@ func Test_fetchDocumentMetadata(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{}, // No responses
 					map[string]error{
-						"http://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc2": fmt.Errorf("network error"),
+						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc2": fmt.Errorf("network error"),
 					},
 					http.StatusOK,
 				),
@@ -316,7 +316,7 @@ func Test_fetchDocumentMetadata(t *testing.T) {
 			args: args{
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc4": "{invalid json}",
+						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc4": "{invalid json}",
 					},
 					map[string]error{}, // No errors
 					http.StatusOK,      // Status OK
@@ -357,7 +357,7 @@ func Test_fetchTotalDocStatistics(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{
 						// Use the full URL for the total doc statistics endpoint
-						"http://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": `{
+						"https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": `{
 							"avgDocLength": 798.8730,
 							"docCount": 456789
 						}`,
@@ -378,7 +378,7 @@ func Test_fetchTotalDocStatistics(t *testing.T) {
 				client: createMockHTTPClient(
 					map[string]string{}, // No responses
 					map[string]error{
-						"http://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": fmt.Errorf("network error"),
+						"https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": fmt.Errorf("network error"),
 					},
 					http.StatusOK,
 				),
@@ -403,7 +403,7 @@ func Test_fetchTotalDocStatistics(t *testing.T) {
 			args: args{
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": "{invalid json}",
+						"https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": "{invalid json}",
 					},
 					map[string]error{}, // No errors
 					http.StatusOK,      // Status OK
@@ -422,6 +422,121 @@ func Test_fetchTotalDocStatistics(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("fetchTotalDocStatistics() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_fetchPageRank(t *testing.T) {
+	type args struct {
+		client *http.Client
+		url    string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    PageRankInfo
+		wantErr bool
+	}{
+		{
+			name: "Successful retrieval of PageRank info",
+			args: args{
+				client: createMockHTTPClient(
+					map[string]string{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+							"pageRank": 0.85,
+							"inLinkCount": 123,
+							"outLinkCount": 45
+						}`,
+					},
+					map[string]error{}, // No errors
+					http.StatusOK,      // Status OK
+				),
+				url: "https://example.com",
+			},
+			want: PageRankInfo{
+				PageRank:     0.85,
+				InLinkCount:  123,
+				OutLinkCount: 45,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Network error",
+			args: args{
+				client: createMockHTTPClient(
+					map[string]string{}, // No responses
+					map[string]error{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": fmt.Errorf("network error"),
+					},
+					http.StatusOK,
+				),
+				url: "https://example.com",
+			},
+			want:    PageRankInfo{},
+			wantErr: true,
+		},
+		{
+			name: "Invalid HTTP response",
+			args: args{
+				client: createMockHTTPClient(
+					map[string]string{},            // No responses
+					map[string]error{},             // No errors
+					http.StatusInternalServerError, // Internal server error
+				),
+				url: "https://example.com",
+			},
+			want:    PageRankInfo{},
+			wantErr: true,
+		},
+		{
+			name: "Malformed JSON response",
+			args: args{
+				client: createMockHTTPClient(
+					map[string]string{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": "{invalid json}",
+					},
+					map[string]error{}, // No errors
+					http.StatusOK,      // Status OK
+				),
+				url: "https://example.com",
+			},
+			want:    PageRankInfo{},
+			wantErr: true,
+		},
+		{
+			name: "Empty PageRank response",
+			args: args{
+				client: createMockHTTPClient(
+					map[string]string{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+							"pageRank": 0.0,
+							"inLinkCount": 0,
+							"outLinkCount": 0
+						}`,
+					},
+					map[string]error{}, // No errors
+					http.StatusOK,      // Status OK
+				),
+				url: "https://example.com",
+			},
+			want: PageRankInfo{
+				PageRank:     0.0,
+				InLinkCount:  0,
+				OutLinkCount: 0,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := fetchPageRank(tt.args.client, tt.args.url)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("fetchPageRank() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("fetchPageRank() = %v, want %v", got, tt.want)
 			}
 		})
 	}

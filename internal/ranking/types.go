@@ -1,6 +1,9 @@
 package ranking
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // BM25 parameters
 const k1 = 1.2
@@ -16,13 +19,17 @@ type Query struct {
 	Terms []string
 }
 
+func (q *Query) tokenize() {
+	q.Terms = strings.Fields(q.Text)
+}
+
 // Document represents a document with its ID, rank, and metadata
 type Document struct {
 	DocID           string           `json:"docID"`
 	Rank            int              `json:"rank"`
 	Metadata        DocumentMetadata `json:"metadata"`
-	TermFrequencies map[string]int
-	Features        Features
+	TermFrequencies map[string]int   // helper variable to store the documents terms for efficient feature construction
+	Features        Features         // ranking features
 }
 
 type Documents []Document
@@ -93,4 +100,11 @@ type invertibleIndex map[string][]documentIndex
 type totalDocStatistics struct {
 	AvgDocLength float64 `json:"avgDocLength"`
 	DocCount     int     `json:"docCount"`
+}
+
+// PageRankInfo represents the PageRank and link-related information for a document
+type PageRankInfo struct {
+	PageRank     float64 `json:"pageRank"`
+	InLinkCount  int     `json:"inLinkCount"`
+	OutLinkCount int     `json:"outLinkCount"`
 }

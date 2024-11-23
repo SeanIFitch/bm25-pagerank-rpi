@@ -33,19 +33,8 @@ func RankDocuments(query Query) ([]Document, error) {
 	}
 
 	// Add document metadata and features
-	for _, document := range documents {
-		document.Metadata, err = fetchDocumentMetadata(client, document.DocID)
-		if err != nil {
-			return nil, err
-		}
+	err = documents.initializeFeatures(query, docStatistics, index, client)
 
-		err = document.computeFeatures(query, docStatistics, index)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// add each feature to the feature struct
 	// sort
 	// rank
 
@@ -56,7 +45,7 @@ func RankDocuments(query Query) ([]Document, error) {
 }
 
 // getDocuments returns a slice of all documents in the invertibleIndex
-func getDocuments(index invertibleIndex) ([]Document, error) {
+func getDocuments(index invertibleIndex) (Documents, error) {
 	// Map to store aggregated term frequencies for each document
 	documentsMap := make(map[string]Document)
 
@@ -80,7 +69,7 @@ func getDocuments(index invertibleIndex) ([]Document, error) {
 	}
 
 	// Convert the map to a slice
-	documents := make([]Document, 0, len(documentsMap))
+	documents := make(Documents, 0, len(documentsMap))
 	for _, doc := range documentsMap {
 		documents = append(documents, doc)
 	}

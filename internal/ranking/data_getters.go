@@ -35,7 +35,7 @@ func getInvertibleIndex(client *http.Client, query Query) (invertibleIndex, erro
 // fetchInvertibleIndexForTerm retrieves the inverted index for a given term from the Indexing API
 func fetchInvertibleIndexForTerm(client *http.Client, term string) ([]documentIndex, error) {
 	// Construct the API URL using the term as a query parameter
-	apiURL := fmt.Sprintf("http://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=%s", term)
+	apiURL := fmt.Sprintf("https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=%s", term)
 
 	// Make the HTTP GET request to fetch the inverted index
 	resp, err := client.Get(apiURL)
@@ -66,7 +66,7 @@ func fetchInvertibleIndexForTerm(client *http.Client, term string) ([]documentIn
 // fetchDocumentMetadata retrieves the metadata for a given document ID from the Indexing API
 func fetchDocumentMetadata(client *http.Client, docID string) (DocumentMetadata, error) {
 	// Construct the API URL using the document ID as a query parameter
-	apiURL := fmt.Sprintf("http://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=%s", docID)
+	apiURL := fmt.Sprintf("https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=%s", docID)
 
 	// Make the HTTP GET request to fetch the document metadata
 	resp, err := client.Get(apiURL)
@@ -97,7 +97,7 @@ func fetchDocumentMetadata(client *http.Client, docID string) (DocumentMetadata,
 // fetchTotalDocStatistics retrieves the total document statistics from the Indexing API
 func fetchTotalDocStatistics(client *http.Client) (totalDocStatistics, error) {
 	// Construct the API URL
-	apiURL := "http://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics"
+	apiURL := "https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics"
 
 	// Make the HTTP GET request to fetch the total document statistics
 	resp, err := client.Get(apiURL)
@@ -119,4 +119,31 @@ func fetchTotalDocStatistics(client *http.Client) (totalDocStatistics, error) {
 
 	// Return the parsed statistics
 	return stats, nil
+}
+
+// fetchPageRank retrieves the PageRank score and related link information for a given URL
+func fetchPageRank(client *http.Client, url string) (PageRankInfo, error) {
+	// Construct the API URL using the document URL as a query parameter
+	apiURL := fmt.Sprintf("https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=%s", url)
+
+	// Make the HTTP GET request to fetch the PageRank information
+	resp, err := client.Get(apiURL)
+	if err != nil {
+		return PageRankInfo{}, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Ensure the response status code is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return PageRankInfo{}, fmt.Errorf("failed to fetch PageRank info: %v", resp.Status)
+	}
+
+	// Decode the JSON response from the API into a struct
+	var result PageRankInfo
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return PageRankInfo{}, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	// Return the parsed PageRank information
+	return result, nil
 }
