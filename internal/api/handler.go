@@ -5,9 +5,13 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"rpi-search-ranking/internal/ranking"
 )
+
+// HTTP timeout
+const httpTimeout = 10 * time.Second
 
 // GetDocumentScores returns the scores and metadata for relevant documents based on the query
 func GetDocumentScores(query ranking.Query) ([]ranking.Document, error) {
@@ -16,8 +20,13 @@ func GetDocumentScores(query ranking.Query) ([]ranking.Document, error) {
 		return nil, errors.New("query text cannot be empty")
 	}
 
+	// Create a new HTTP client
+	client := &http.Client{
+		Timeout: httpTimeout,
+	}
+
 	// Call the ranking logic from internal/rank
-	docScores, err := ranking.RankDocuments(query)
+	docScores, err := ranking.RankDocuments(query, client)
 	if err != nil {
 		return nil, err
 	}

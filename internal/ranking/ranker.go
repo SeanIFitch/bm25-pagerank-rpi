@@ -3,16 +3,12 @@ package ranking
 import (
 	"log"
 	"net/http"
+	"slices"
 )
 
 // RankDocuments ranks the documents based on the query text
-func RankDocuments(query Query) ([]Document, error) {
+func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	query.tokenize()
-
-	// Create a new HTTP client
-	client := &http.Client{
-		Timeout: httpTimeout,
-	}
 
 	// Get invertible index for the query
 	index, err := getInvertibleIndex(client, query)
@@ -26,6 +22,11 @@ func RankDocuments(query Query) ([]Document, error) {
 		return nil, err
 	}
 
+	// Return early if there are no documents
+	if len(documents) == 0 {
+		return nil, nil
+	}
+
 	// Count and avg length of all documents
 	docStatistics, err := fetchTotalDocStatistics(client)
 	if err != nil {
@@ -35,8 +36,25 @@ func RankDocuments(query Query) ([]Document, error) {
 	// Add document metadata and features
 	err = documents.initializeFeatures(query, docStatistics, index, client)
 
-	// sort
+	// Sort by BM25
+	slices.SortFunc(documents, func(a, b Document) int {
+		if a.Features.BM25 > b.Features.BM25 {
+			return -1
+		} else if a.Features.BM25 < b.Features.BM25 {
+			return 1
+		}
+		return 0
+	})
+
+	// Only consider top maxDocuments documents
+	documents = documents[:min(maxDocuments, len(documents))]
+
+	// TODO: sort by logistic regression with Timsort
+
 	// rank
+	for i := range documents {
+		documents[i].Rank = i + 1
+	}
 
 	log.Printf("Ranked documents for query: %s", query)
 

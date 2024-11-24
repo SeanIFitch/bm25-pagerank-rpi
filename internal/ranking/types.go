@@ -2,15 +2,14 @@ package ranking
 
 import (
 	"strings"
-	"time"
 )
+
+// Max number of documents to return
+const maxDocuments = 1000
 
 // BM25 parameters
 const k1 = 1.2
 const b = 0.75
-
-// HTTP timeout
-const httpTimeout = 10 * time.Second
 
 // Tolerance for floating-point comparison in tests
 const epsilon = 1e-12
