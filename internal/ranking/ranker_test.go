@@ -317,7 +317,7 @@ func Test_getDocuments(t *testing.T) {
 				return
 			}
 
-			// compare documents without regard for order
+			// Compare documents without regard for order using maps
 			gotMap := make(map[string]Document)
 			wantMap := make(map[string]Document)
 			for _, doc := range got {
@@ -326,7 +326,7 @@ func Test_getDocuments(t *testing.T) {
 			for _, doc := range tt.want {
 				wantMap[doc.DocID] = doc
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(gotMap, wantMap) {
 				t.Errorf("getDocuments() = %v, want %v", got, tt.want)
 			}
 		})
