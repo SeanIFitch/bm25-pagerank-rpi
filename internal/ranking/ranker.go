@@ -36,6 +36,8 @@ func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	// Add document metadata and features
 	err = documents.initializeFeatures(query, docStatistics, index, client)
 
+	// TODO: store documents for training data
+
 	// Sort by BM25
 	slices.SortFunc(documents, func(a, b Document) int {
 		if a.Features.BM25 > b.Features.BM25 {

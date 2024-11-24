@@ -1,5 +1,0 @@
-package training
-
-func main() {
-
-}
