@@ -5,7 +5,36 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+
+	"gonum.org/v1/gonum/stat"
 )
+
+func compareFeatures(got, want Features, epsilon float64) bool {
+	return got.CoveredQueryTermNumber == want.CoveredQueryTermNumber &&
+		math.Abs(got.CoveredQueryTermRatio-want.CoveredQueryTermRatio) <= epsilon &&
+		got.SumTermFrequency == want.SumTermFrequency &&
+		got.MinTermFrequency == want.MinTermFrequency &&
+		got.MaxTermFrequency == want.MaxTermFrequency &&
+		math.Abs(got.MeanTermFrequency-want.MeanTermFrequency) <= epsilon &&
+		math.Abs(got.VarianceTermFrequency-want.VarianceTermFrequency) <= epsilon &&
+		got.StreamLength == want.StreamLength &&
+		math.Abs(got.SumStreamLengthNormalizedTF-want.SumStreamLengthNormalizedTF) <= epsilon &&
+		math.Abs(got.MinStreamLengthNormalizedTF-want.MinStreamLengthNormalizedTF) <= epsilon &&
+		math.Abs(got.MaxStreamLengthNormalizedTF-want.MaxStreamLengthNormalizedTF) <= epsilon &&
+		math.Abs(got.MeanStreamLengthNormalizedTF-want.MeanStreamLengthNormalizedTF) <= epsilon &&
+		math.Abs(got.VarianceStreamLengthNormalizedTF-want.VarianceStreamLengthNormalizedTF) <= epsilon &&
+		math.Abs(got.SumTFIDF-want.SumTFIDF) <= epsilon &&
+		math.Abs(got.MinTFIDF-want.MinTFIDF) <= epsilon &&
+		math.Abs(got.MaxTFIDF-want.MaxTFIDF) <= epsilon &&
+		math.Abs(got.MeanTFIDF-want.MeanTFIDF) <= epsilon &&
+		math.Abs(got.VarianceTFIDF-want.VarianceTFIDF) <= epsilon &&
+		math.Abs(got.BM25-want.BM25) <= epsilon &&
+		got.NumSlashesInURL == want.NumSlashesInURL &&
+		got.LengthOfURL == want.LengthOfURL &&
+		got.InlinkCount == want.InlinkCount &&
+		got.OutlinkCount == want.OutlinkCount &&
+		math.Abs(got.PageRank-want.PageRank) <= epsilon
+}
 
 func Test_getIDF(t *testing.T) {
 	type args struct {
@@ -119,7 +148,7 @@ func Test_calculateTermFrequencyStats(t *testing.T) {
 			wantMin:      2,
 			wantMax:      5,
 			wantMean:     3.3333333333333335,
-			wantVariance: 1.5555555555555554,
+			wantVariance: stat.PopVariance([]float64{3, 5, 2}, nil),
 		},
 		{
 			name: "Edge Case - No Terms Found",
@@ -196,7 +225,7 @@ func Test_calculateTermFrequencyStats(t *testing.T) {
 			wantMin:      10000,
 			wantMax:      20000,
 			wantMean:     15000.0,
-			wantVariance: 2.5e+07, // Corrected expected variance
+			wantVariance: 2.5e+07,
 		},
 	}
 	for _, tt := range tests {
@@ -374,11 +403,138 @@ func Test_calculateBM25(t *testing.T) {
 		args args
 		want float64
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Basic Case",
+			args: args{
+				query: Query{
+					Terms: []string{"term1"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 3,
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+				},
+				docLength:    100,
+				avgDocLength: 120.0,
+			},
+			want: 1.2 * ((3 * (k1 + 1)) / (3 + k1*((1-b)+b*(100.0/120.0)))),
+		},
+		{
+			name: "Multiple Terms",
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term2"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 3,
+					"term2": 2,
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+					"term2": 1.5,
+				},
+				docLength:    100,
+				avgDocLength: 120,
+			},
+			want: 1.2*((3*(k1+1))/(3+k1*((1-b)+b*(100.0/120.0)))) +
+				1.5*((2*(k1+1))/(2+k1*((1-b)+b*(100.0/120.0)))),
+		},
+		{
+			name: "No IDF for Term",
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term2"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 3,
+					"term2": 2,
+				},
+				idf: map[string]float64{
+					"term1": 1.2, // term2 has no IDF
+				},
+				docLength:    100,
+				avgDocLength: 120,
+			},
+			want: 1.2 * ((3 * (k1 + 1)) / (3 + k1*((1-b)+b*(100.0/120.0)))),
+		},
+		{
+			name: "Zero Term Frequency",
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term2"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 0,
+					"term2": 2,
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+					"term2": 1.5,
+				},
+				docLength:    100,
+				avgDocLength: 120,
+			},
+			want: 1.5 * ((2 * (k1 + 1)) / (2 + k1*((1-b)+b*(100.0/120.0)))),
+		},
+		{
+			name: "Edge Case with Long Document",
+			args: args{
+				query: Query{
+					Terms: []string{"term1"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 10,
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+				},
+				docLength:    1000,
+				avgDocLength: 500,
+			},
+			want: 1.2 * ((10 * (k1 + 1)) / (10 + k1*((1-b)+b*(1000.0/500.0)))),
+		},
+		{
+			name: "Duplicate Query Terms",
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term1"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 10,
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+				},
+				docLength:    1000,
+				avgDocLength: 500,
+			},
+			want: 2 * 1.2 * ((10 * (k1 + 1)) / (10 + k1*((1-b)+b*(1000.0/500.0)))),
+		},
+		{
+			name: "No Term Frequency in Query",
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term3"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 3,
+					"term2": 2, // term3 has no tf
+				},
+				idf: map[string]float64{
+					"term1": 1.2,
+					"term3": 0.8,
+				},
+				docLength:    100,
+				avgDocLength: 120,
+			},
+			want: 1.2 * ((3 * (k1 + 1)) / (3 + k1*((1-b)+b*(100.0/120.0)))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := calculateBM25(tt.args.query, tt.args.termFrequencies, tt.args.idf, tt.args.docLength, tt.args.avgDocLength); got != tt.want {
+			got := calculateBM25(tt.args.query, tt.args.termFrequencies, tt.args.idf, tt.args.docLength, tt.args.avgDocLength)
+			if diff := math.Abs(got - tt.want); diff > epsilon {
 				t.Errorf("calculateBM25() = %v, want %v", got, tt.want)
 			}
 		})
@@ -400,7 +556,56 @@ func Test_calculateIDFMetrics(t *testing.T) {
 		wantMean     float64
 		wantVariance float64
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Basic Case",
+			args: args{
+				query: Query{
+					Id:    "q1",
+					Text:  "basic query",
+					Terms: []string{"term1", "term2", "term3"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 2,
+					"term2": 3,
+					"term3": 5,
+				},
+				idf: map[string]float64{
+					"term1": 1.0,
+					"term2": 0.5,
+					"term3": 2.0,
+				},
+			},
+			wantSum:      2.0*1.0 + 3.0*0.5 + 5.0*2.0,
+			wantMin:      3.0 * 0.5,
+			wantMax:      5.0 * 2.0,
+			wantMean:     (2.0*1.0 + 3.0*0.5 + 5.0*2.0) / 3.0,
+			wantVariance: ((2.0-4.5)*(2.0-4.5) + (1.5-4.5)*(1.5-4.5) + (10.0-4.5)*(10.0-4.5)) / 3.0,
+		},
+		{
+			name: "No Matching Terms",
+			args: args{
+				query: Query{
+					Id:    "q2",
+					Text:  "unmatched query",
+					Terms: []string{"term4"},
+				},
+				termFrequencies: map[string]int{
+					"term1": 2,
+					"term2": 3,
+					"term3": 5,
+				},
+				idf: map[string]float64{
+					"term1": 1.0,
+					"term2": 0.5,
+					"term3": 2.0,
+				},
+			},
+			wantSum:      0.0, // No matching terms
+			wantMin:      0.0,
+			wantMax:      0.0,
+			wantMean:     0.0,
+			wantVariance: 0.0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -434,7 +639,46 @@ func Test_analyzeURL(t *testing.T) {
 		wantNumSlashes int
 		wantLength     int
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Simple URL",
+			args: args{
+				url: "https://example.com",
+			},
+			wantNumSlashes: 2,
+			wantLength:     19,
+		},
+		{
+			name: "URL with path",
+			args: args{
+				url: "https://example.com/path/to/resource",
+			},
+			wantNumSlashes: 5,
+			wantLength:     36,
+		},
+		{
+			name: "URL with query parameters",
+			args: args{
+				url: "https://example.com/path?query=1",
+			},
+			wantNumSlashes: 3,
+			wantLength:     32,
+		},
+		{
+			name: "Root URL",
+			args: args{
+				url: "https://example.com/",
+			},
+			wantNumSlashes: 3,
+			wantLength:     20,
+		},
+		{
+			name: "Empty URL",
+			args: args{
+				url: "",
+			},
+			wantNumSlashes: 0,
+			wantLength:     0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -468,8 +712,70 @@ func TestDocument_calculateFeatures(t *testing.T) {
 		fields  fields
 		args    args
 		wantErr bool
+		want    Features
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Basic case",
+			fields: fields{
+				Metadata: DocumentMetadata{
+					DocLength: 100,
+					URL:       "https://example.com",
+				},
+				TermFrequencies: map[string]int{
+					"term1": 2,
+					"term2": 10,
+				},
+			},
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term2", "term3"},
+				},
+				idf: map[string]float64{
+					"term1": 1.0,
+					"term2": 0.5,
+					"term3": 2.0,
+				},
+				avgDocLength: 120.0,
+				client: createMockHTTPClient(
+					map[string]string{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+							"pageRank": 0.85,
+							"inLinkCount": 123,
+							"outLinkCount": 45
+						}`,
+					},
+					map[string]error{}, // No errors
+					http.StatusOK,      // Status OK
+				),
+			},
+			wantErr: false,
+			want: Features{
+				CoveredQueryTermNumber:           2,
+				CoveredQueryTermRatio:            2.0 / 3.0,
+				SumTermFrequency:                 12,
+				MinTermFrequency:                 0.0,
+				MaxTermFrequency:                 10,
+				MeanTermFrequency:                4.0,
+				VarianceTermFrequency:            stat.PopVariance([]float64{2.0, 10.0, 0.0}, nil),
+				StreamLength:                     100,
+				SumStreamLengthNormalizedTF:      (2.0 / 100.0) + (10.0 / 100.0),
+				MinStreamLengthNormalizedTF:      0.0,
+				MaxStreamLengthNormalizedTF:      10.0 / 100.0,
+				MeanStreamLengthNormalizedTF:     4.0 / 100.0,
+				VarianceStreamLengthNormalizedTF: stat.PopVariance([]float64{0.02, 0.1, 0.0}, nil),
+				SumTFIDF:                         2.0*1.0 + 10.0*0.5,
+				MinTFIDF:                         0.0,
+				MaxTFIDF:                         5.0,
+				MeanTFIDF:                        (2.0*1.0 + 10.0*0.5) / 3.0,
+				VarianceTFIDF:                    stat.PopVariance([]float64{2.0, 5.0, 0.0}, nil),
+				BM25:                             1.0*((2*(k1+1))/(2+k1*((1-b)+b*(100.0/120.0)))) + 0.5*((10*(k1+1))/(10+k1*((1-b)+b*(100.0/120.0)))),
+				NumSlashesInURL:                  2,
+				LengthOfURL:                      19,
+				InlinkCount:                      123,
+				OutlinkCount:                     45,
+				PageRank:                         0.85,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -482,6 +788,9 @@ func TestDocument_calculateFeatures(t *testing.T) {
 			}
 			if err := doc.calculateFeatures(tt.args.query, tt.args.idf, tt.args.avgDocLength, tt.args.client); (err != nil) != tt.wantErr {
 				t.Errorf("Document.calculateFeatures() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !compareFeatures(doc.Features, tt.want, epsilon) {
+				t.Errorf("Document.calculateFeatures() doc.Features = %+v, want %+v", doc.Features, tt.want)
 			}
 		})
 	}
@@ -499,13 +808,128 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 		docs    *Documents
 		args    args
 		wantErr bool
+		want    *Documents
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Basic case",
+			docs: &Documents{
+				{
+					DocID: "doc1",
+					TermFrequencies: map[string]int{
+						"term1": 2,
+						"term2": 10,
+					},
+				},
+			},
+			args: args{
+				query: Query{
+					Terms: []string{"term1", "term2", "term3"},
+				},
+				docStatistics: totalDocStatistics{
+					AvgDocLength: 120.0,
+					DocCount:     5,
+				},
+				index: invertibleIndex{
+					"term1": {
+						{DocID: "doc1", Frequency: 2, Positions: []int{1, 2}},
+						{DocID: "doc2", Frequency: 1, Positions: []int{1}},
+					},
+					"term2": {
+						{DocID: "doc1", Frequency: 1, Positions: []int{1}},
+					},
+					"term3": {
+						{DocID: "doc1", Frequency: 1, Positions: []int{1}},
+					},
+				},
+				client: createMockHTTPClient(
+					map[string]string{
+						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+											"pageRank": 0.85,
+											"inLinkCount": 123,
+											"outLinkCount": 45
+										}`,
+						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc1": `{
+											"docID": "12345",
+											"metadata": {
+												"docLength": 100,
+												"timeLastUpdated": "2024-11-09T15:30:00Z",
+												"docType": "PDF",
+												"imageCount": 3,
+												"docTitle": "Introduction to Data Science",
+												"URL": "https://example.com"
+											}
+										}`,
+					},
+					map[string]error{}, // No errors
+					http.StatusOK,      // Status OK
+				),
+			},
+			wantErr: false,
+			want: &Documents{
+				{
+					DocID: "doc1",
+					TermFrequencies: map[string]int{
+						"term1": 2,
+						"term2": 10,
+					},
+					Features: Features{
+						CoveredQueryTermNumber:           2,
+						CoveredQueryTermRatio:            2.0 / 3.0,
+						SumTermFrequency:                 12,
+						MinTermFrequency:                 0.0,
+						MaxTermFrequency:                 10,
+						MeanTermFrequency:                4.0,
+						VarianceTermFrequency:            stat.PopVariance([]float64{2.0, 10.0, 0.0}, nil),
+						StreamLength:                     100,
+						SumStreamLengthNormalizedTF:      (2.0 / 100.0) + (10.0 / 100.0),
+						MinStreamLengthNormalizedTF:      0.0,
+						MaxStreamLengthNormalizedTF:      10.0 / 100.0,
+						MeanStreamLengthNormalizedTF:     4.0 / 100.0,
+						VarianceStreamLengthNormalizedTF: stat.PopVariance([]float64{0.02, 0.1, 0.0}, nil),
+						SumTFIDF:                         2.0*math.Log(5.0/(2.0+1.0)) + 10.0*math.Log(5.0/(1.0+1.0)),
+						MinTFIDF:                         0.0,
+						MaxTFIDF:                         max(2.0*math.Log(5.0/(2.0+1.0)), 10.0*math.Log(5.0/(1.0+1.0))),
+						MeanTFIDF:                        (2.0*math.Log(5.0/(2.0+1.0)) + 10.0*math.Log(5.0/(1.0+1.0))) / 3.0,
+						VarianceTFIDF:                    stat.PopVariance([]float64{2.0 * math.Log(5.0/(2.0+1.0)), 10.0 * math.Log(5.0/(1.0+1.0)), 0.0}, nil),
+						BM25:                             math.Log(5.0/(2.0+1.0))*((2*(k1+1))/(2+k1*((1-b)+b*(100.0/120.0)))) + math.Log(5.0/(1.0+1.0))*((10*(k1+1))/(10+k1*((1-b)+b*(100.0/120.0)))),
+						NumSlashesInURL:                  2,
+						LengthOfURL:                      19,
+						InlinkCount:                      123,
+						OutlinkCount:                     45,
+						PageRank:                         0.85,
+					},
+					Metadata: DocumentMetadata{
+						DocLength:       100,
+						TimeLastUpdated: "2024-11-09T15:30:00Z",
+						FileType:        "PDF",
+						ImageCount:      3,
+						DocTitle:        "Introduction to Data Science",
+						URL:             "https://example.com",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.docs.initializeFeatures(tt.args.query, tt.args.docStatistics, tt.args.index, tt.args.client); (err != nil) != tt.wantErr {
 				t.Errorf("Documents.initializeFeatures() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			docs := tt.docs
+
+			for i, doc := range *docs {
+				gotFeatures := doc.Features
+				wantFeatures := (*tt.want)[i].Features
+				if !compareFeatures(gotFeatures, wantFeatures, 1e-9) {
+					t.Errorf("Features mismatch for doc %s: got %v, want %v", doc.DocID, gotFeatures, wantFeatures)
+				}
+
+				gotMetadata := doc.Metadata
+				wantMetadata := (*tt.want)[i].Metadata
+				if !reflect.DeepEqual(gotMetadata, wantMetadata) {
+					t.Errorf("DocumentMetadata mismatch for doc %s: got %v, want %v", doc.DocID, gotMetadata, wantMetadata)
+				}
 			}
 		})
 	}

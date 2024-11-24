@@ -12,6 +12,9 @@ const b = 0.75
 // HTTP timeout
 const httpTimeout = 10 * time.Second
 
+// Tolerance for floating-point comparison in tests
+const epsilon = 1e-12
+
 // Query defines the struct to parse the incoming query
 type Query struct {
 	Id    string `json:"queryID"`

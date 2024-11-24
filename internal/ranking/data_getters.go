@@ -3,6 +3,8 @@ package ranking
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 )
 
@@ -42,7 +44,12 @@ func fetchInvertibleIndexForTerm(client *http.Client, term string) ([]documentIn
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {
@@ -73,7 +80,12 @@ func fetchDocumentMetadata(client *http.Client, docID string) (DocumentMetadata,
 	if err != nil {
 		return DocumentMetadata{}, fmt.Errorf("failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {
@@ -104,7 +116,12 @@ func fetchTotalDocStatistics(client *http.Client) (totalDocStatistics, error) {
 	if err != nil {
 		return totalDocStatistics{}, fmt.Errorf("failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {
@@ -131,7 +148,12 @@ func fetchPageRank(client *http.Client, url string) (PageRankInfo, error) {
 	if err != nil {
 		return PageRankInfo{}, fmt.Errorf("failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {

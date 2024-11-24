@@ -22,30 +22,34 @@ func calculateTermFrequencyStats(query Query, termFrequencies map[string]int) (s
 	min = math.MaxInt
 	max = math.MinInt
 
-	// Collect term frequencies for query terms
+	// Prepare for statistics calculation
 	var tfValues []int
+	queryTermCount := float64(len(query.Terms)) // Total terms in query
+
 	for _, term := range query.Terms {
-		if tf, found := termFrequencies[term]; found {
-			tfValues = append(tfValues, tf)
-			sum += tf
-			if tf < min {
-				min = tf
-			}
-			if tf > max {
-				max = tf
-			}
+		tf := 0 // Default frequency is 0 if not found in termFrequencies
+		if val, found := termFrequencies[term]; found {
+			tf = val
+		}
+		tfValues = append(tfValues, tf) // Always include tf (even if 0)
+
+		sum += tf
+		if tf < min {
+			min = tf
+		}
+		if tf > max {
+			max = tf
 		}
 	}
 
-	// Handle edge case: No query terms found in the document
-	if len(tfValues) == 0 {
+	// Handle edge case: No query terms
+	if queryTermCount == 0.0 {
 		min, max = 0, 0
-		return sum, min, max, 0.0, 0.0
+		return 0, 0, 0, 0.0, 0.0
 	}
 
 	// Compute mean
-	count := float64(len(tfValues))
-	mean = float64(sum) / count
+	mean = float64(sum) / queryTermCount
 
 	// Compute variance
 	var varianceSum float64
@@ -53,7 +57,7 @@ func calculateTermFrequencyStats(query Query, termFrequencies map[string]int) (s
 		diff := float64(tf) - mean
 		varianceSum += diff * diff
 	}
-	variance = varianceSum / count
+	variance = varianceSum / queryTermCount
 
 	return sum, min, max, mean, variance
 }
@@ -71,30 +75,33 @@ func calculateNormalizedTFStats(query Query, termFrequencies map[string]int, doc
 
 	// Collect normalized term frequencies
 	var normalizedTFValues []float64
-	for _, term := range query.Terms {
-		if tf, found := termFrequencies[term]; found {
-			normalizedTF := float64(tf) / float64(docLength)
-			normalizedTFValues = append(normalizedTFValues, normalizedTF)
+	queryTermCount := len(query.Terms)
 
-			// Update sum, min, and max
-			sum += normalizedTF
-			if normalizedTF < min {
-				min = normalizedTF
-			}
-			if normalizedTF > max {
-				max = normalizedTF
-			}
+	for _, term := range query.Terms {
+		tf := 0 // Default term frequency is 0 if the term is not found
+		if val, found := termFrequencies[term]; found {
+			tf = val
+		}
+		normalizedTF := float64(tf) / float64(docLength)
+		normalizedTFValues = append(normalizedTFValues, normalizedTF)
+
+		// Update sum, min, and max
+		sum += normalizedTF
+		if normalizedTF < min {
+			min = normalizedTF
+		}
+		if normalizedTF > max {
+			max = normalizedTF
 		}
 	}
 
-	// Handle edge case: No query terms found in the document
-	if len(normalizedTFValues) == 0 {
-		min, max = 0.0, 0.0
-		return sum, min, max, 0.0, 0.0
+	// Handle edge case: No query terms
+	if queryTermCount == 0 {
+		return 0, 0, 0, 0, 0
 	}
 
 	// Compute mean
-	count := float64(len(normalizedTFValues))
+	count := float64(queryTermCount)
 	mean = sum / count
 
 	// Compute variance
@@ -113,7 +120,10 @@ func calculateBM25(query Query, termFrequencies map[string]int, idf map[string]f
 
 	// Loop over query terms and calculate BM25 contributions
 	for _, term := range query.Terms {
-		tf := termFrequencies[term]   // Term frequency in the document
+		tf, exists := termFrequencies[term] // Term frequency in the document
+		if !exists {
+			continue // Skip terms with no tf
+		}
 		idfValue, exists := idf[term] // Precomputed IDF for the term
 		if !exists {
 			continue // Skip terms with no IDF value
@@ -137,20 +147,25 @@ func calculateIDFMetrics(query Query, termFrequencies map[string]int, idf map[st
 
 	// Iterate over query terms
 	for _, term := range query.Terms {
-		if tf, found := termFrequencies[term]; found {
-			if idfValue, exists := idf[term]; exists {
-				// Calculate TF-IDF for the term
-				tfidf := float64(tf) * idfValue
-				tfidfValues = append(tfidfValues, tfidf)
+		// Default frequency is 0 if not found in termFrequencies
+		tf := 0
+		if val, found := termFrequencies[term]; found {
+			tf = val
+		}
 
-				// Update sum, min, and max
-				sum += tfidf
-				if tfidf < min {
-					min = tfidf
-				}
-				if tfidf > max {
-					max = tfidf
-				}
+		// Proceed if IDF value exists for the term
+		if idfValue, exists := idf[term]; exists {
+			// Calculate TF-IDF for the term
+			tfidf := float64(tf) * idfValue
+			tfidfValues = append(tfidfValues, tfidf)
+
+			// Update sum, min, and max
+			sum += tfidf
+			if tfidf < min {
+				min = tfidf
+			}
+			if tfidf > max {
+				max = tfidf
 			}
 		}
 	}
@@ -246,7 +261,8 @@ func (docs *Documents) initializeFeatures(query Query, docStatistics totalDocSta
 
 	// Fetch metadata and calculate features
 	var errList []error
-	for _, doc := range *docs {
+	for i := range *docs {
+		doc := &(*docs)[i]
 		metadata, err := fetchDocumentMetadata(client, doc.DocID)
 		if err != nil {
 			errList = append(errList, err)
