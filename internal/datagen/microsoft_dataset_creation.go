@@ -1,8 +1,10 @@
-package training
+package datagen
 
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"math"
 	"math/rand"
 	"os"
 	"strconv"
@@ -10,6 +12,32 @@ import (
 
 	"rpi-search-ranking/internal/ranking"
 )
+
+func CreateExamples(filePath string, maxExamples, minDiff int) ([]ranking.Features, []int, error) {
+	relevances, qids, features, err := loadDataset(filePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	X, Y := createComparisons(relevances, qids, features, maxExamples, minDiff)
+
+	if len(Y) < maxExamples {
+		return X, Y, fmt.Errorf("error: Not enough examples in dataset, found %v, expected %v", len(Y), maxExamples)
+	}
+
+	shuffleData(X, Y)
+
+	return X, Y, nil
+}
+
+// shuffleData Helper function to shuffle the data
+func shuffleData(X []ranking.Features, Y []int) {
+	for i := len(X) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		X[i], X[j] = X[j], X[i]
+		Y[i], Y[j] = Y[j], Y[i]
+	}
+}
 
 func parseLine(line string) (relevance int, qid int, features ranking.Features, err error) {
 	// Split the line into components
@@ -105,12 +133,17 @@ func parseLine(line string) (relevance int, qid int, features ranking.Features, 
 	return relevance, qid, features, nil
 }
 
-func LoadDataset(filePath string) ([]int, []int, []ranking.Features, error) {
+func loadDataset(filePath string) ([]int, []int, []ranking.Features, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Printf("warning: failed to close file: %v\n", err)
+		}
+	}(file)
 
 	var relevances []int
 	var qids []int
@@ -136,7 +169,7 @@ func LoadDataset(filePath string) ([]int, []int, []ranking.Features, error) {
 	return relevances, qids, featureVectors, nil
 }
 
-func CreateExamples(relevances []int, qids []int, features []ranking.Features, maxExamples int) ([]ranking.Features, []int) {
+func createComparisons(relevances []int, qids []int, features []ranking.Features, maxExamples, minDiff int) ([]ranking.Features, []int) {
 	var pairwiseFeatures []ranking.Features
 	var labels []int
 
@@ -159,8 +192,8 @@ func CreateExamples(relevances []int, qids []int, features []ranking.Features, m
 		n := len(indices)
 		for i := 0; i < n; i++ {
 			for j := 0; j < n; j++ {
-				if i == j || relevances[indices[i]] == relevances[indices[j]] {
-					continue // Skip same document or equal relevance
+				if i == j || math.Abs(float64(relevances[indices[i]]-relevances[indices[j]])) < float64(minDiff) {
+					continue // Skip same document or less than min relevance difference
 				}
 
 				// Compute pairwise features
