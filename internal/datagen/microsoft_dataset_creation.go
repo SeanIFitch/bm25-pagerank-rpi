@@ -229,7 +229,6 @@ func createComparisons(relevances []int, qids []int, features []ranking.Features
 				if relevances[indices[i]] < relevances[indices[j]] {
 					label = -1
 				}
-				fmt.Println(label, relevances[indices[i]], relevances[indices[j]])
 
 				// Add example to the reservoir using reservoir sampling
 				exampleCount++

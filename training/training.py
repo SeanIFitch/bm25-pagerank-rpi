@@ -2,11 +2,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import RobustScaler
 from sklearn.feature_selection import SelectKBest, f_classif
+import joblib
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report
+)
 
 
 class FeatureDataset(Dataset):
@@ -26,14 +30,15 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
         self.block = nn.Sequential(
             nn.Linear(in_features, out_features),
-            nn.BatchNorm1d(out_features),
-            nn.LeakyReLU(0.1),
+            nn.LayerNorm(out_features),
+            nn.GELU(),
             nn.Dropout(0.3),
             nn.Linear(out_features, out_features),
+
             nn.BatchNorm1d(out_features)
         )
         self.shortcut = nn.Linear(in_features, out_features) if in_features != out_features else nn.Identity()
-        self.activation = nn.LeakyReLU(0.1)
+        self.activation = nn.GELU()
 
     def forward(self, x):
         return self.activation(self.block(x) + self.shortcut(x))
@@ -43,11 +48,15 @@ class ImprovedNeuralNetwork(nn.Module):
     def __init__(self, input_dim):
         super(ImprovedNeuralNetwork, self).__init__()
         self.network = nn.Sequential(
+            # More residual blocks
             ResidualBlock(input_dim, 128),
+            ResidualBlock(128, 256),
+            ResidualBlock(256, 512),
+            ResidualBlock(512, 256),
+            ResidualBlock(256, 128),
             ResidualBlock(128, 64),
-            ResidualBlock(64, 32),
-            ResidualBlock(32, 16),
-            nn.Linear(16, 2)
+            nn.Dropout(0.4),
+            nn.Linear(64, 2)
         )
 
     def forward(self, x):
@@ -82,14 +91,21 @@ def load_and_preprocess_data(train_file, test_file):
     return X_train_scaled, X_test_scaled, Y_train, Y_test, scaler
 
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, device, epochs=200):
+def train_model(model, train_loader, val_loader, criterion, optimizer, device, epochs=50):
     print(f"Training the model for {epochs} epochs...")
 
     # Learning rate scheduler
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode='min',
+        factor=0.5,
+        patience=10,
+        min_lr=1e-5
+    )
 
     best_val_loss = float('inf')
     early_stop_counter = 0
+    patience = 15
 
     model.train()
     for epoch in range(epochs):
@@ -125,19 +141,19 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, e
 
         print(f'Epoch [{epoch + 1}/{epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}')
 
-        # Learning rate scheduling and early stopping
+        # Learning rate scheduling with validation loss
         scheduler.step(avg_val_loss)
 
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             early_stop_counter = 0
-            # Optionally save the best model
+            # Save the best model
             torch.save(model.state_dict(), 'best_model.pth')
         else:
             early_stop_counter += 1
 
         # Early stopping
-        if early_stop_counter >= 20:
+        if early_stop_counter >= patience:
             print(f"Early stopping triggered after {epoch + 1} epochs")
             break
 
@@ -171,14 +187,6 @@ def evaluate_model(model, test_loader, device):
     print(f'Accuracy on test set: {accuracy:.2f}%')
 
     # Additional Metrics
-    from sklearn.metrics import (
-        precision_score,
-        recall_score,
-        f1_score,
-        confusion_matrix,
-        classification_report
-    )
-
     print("\nDetailed Classification Report:")
     print(classification_report(all_labels, all_predictions))
 
@@ -221,21 +229,24 @@ def main():
     model = ImprovedNeuralNetwork(input_dim).to(device)
 
     # Loss and optimizer
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Added label smoothing
-    optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-5)  # Added weight decay for regularization
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    optimizer = optim.AdamW(
+        model.parameters(),
+        lr=0.001,
+        weight_decay=2e-5
+    )
 
     # Train the model
     train_model(model, train_loader, val_loader, criterion, optimizer, device)
 
     # Load the best model
-    model.load_state_dict(torch.load('best_model.pth'))
+    model.load_state_dict(torch.load('best_model.pth', weights_only=True))
 
     # Evaluate the model
     evaluate_model(model, test_loader, device)
 
     # Save the model and scaler
     torch.save(model.state_dict(), 'nn_classifier_model.pth')
-    import joblib
     joblib.dump(scaler, 'feature_scaler.joblib')
     print("Model and scaler saved successfully!")
 
