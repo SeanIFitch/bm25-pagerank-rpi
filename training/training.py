@@ -206,8 +206,8 @@ def main():
     print(f'Using device: {device}')
 
     # Load and preprocess data
-    train_file = '/home/fitchs/Projects/rpi-search-ranking/data/processed/MSLR-WEB30K/Fold1/1mil-train.csv'
-    test_file = '/home/fitchs/Projects/rpi-search-ranking/data/processed/MSLR-WEB30K/Fold1/100k-test.csv'
+    train_file = '/home/fitchs/Projects/rpi-search-ranking/data/processed/MSLR-WEB30K/Fold1/9mil-train.csv'
+    test_file = '/home/fitchs/Projects/rpi-search-ranking/data/processed/MSLR-WEB30K/Fold1/1mil-test.csv'
 
     X_train, X_test, y_train, y_test, scaler = load_and_preprocess_data(train_file, test_file)
 

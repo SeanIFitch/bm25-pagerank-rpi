@@ -36,8 +36,6 @@ func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	// Add document metadata and features
 	err = documents.initializeFeatures(query, docStatistics, index, client)
 
-	// TODO: store documents for training data
-
 	// Sort by BM25
 	slices.SortFunc(documents, func(a, b Document) int {
 		if a.Features.BM25 > b.Features.BM25 {
@@ -52,6 +50,13 @@ func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	documents = documents[:min(maxDocuments, len(documents))]
 
 	// TODO: sort by logistic regression with Timsort
+
+	// Save data for training
+	filename := generateUniqueFilename("data/raw/examples")
+	err = saveData(filename, documents)
+	if err != nil {
+		log.Printf("warning: failed to write documents to file: %v\n", err)
+	}
 
 	// rank
 	for i := range documents {
