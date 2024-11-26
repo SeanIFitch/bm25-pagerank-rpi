@@ -1,6 +1,10 @@
 # Data files for training
 data/processed/*
 
+# Python venv
+.venv
+venv
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

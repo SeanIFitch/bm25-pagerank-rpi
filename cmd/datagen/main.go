@@ -17,12 +17,18 @@ func main() {
 	trainCount := flag.Int("trainCount", 1000000, "Number of train examples to save")
 	testCount := flag.Int("testCount", 100000, "Number of test examples to save")
 	minDiff := flag.Int("minDiff", 3, "Minimum relevance difference for a valid example")
+	fileType := flag.String("fileType", "gob", "Either gob or csv to save a go binary file or csv")
+
 	flag.Parse()
 
 	// Ensure required file paths are provided
 	if *trainFile == "" || *testFile == "" || *trainSave == "" || *testSave == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
+	}
+
+	if *fileType != "gob" && *fileType != "csv" {
+		log.Fatal("Error: fileType must be one of gob or csv")
 	}
 
 	// Validate minDiff range
@@ -40,12 +46,24 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = datagen.SaveData(*trainSave, XTrain, YTrain)
-	if err != nil {
-		return
+	if *fileType == "gob" {
+		err = datagen.SaveData(*trainSave, XTrain, YTrain)
+		if err != nil {
+			return
+		}
+		err = datagen.SaveData(*testSave, XTest, YTest)
+		if err != nil {
+			return
+		}
+	} else if *fileType == "csv" {
+		err = datagen.SaveDataToCSV(*trainSave, XTrain, YTrain)
+		if err != nil {
+			return
+		}
+		err = datagen.SaveDataToCSV(*testSave, XTest, YTest)
+		if err != nil {
+			return
+		}
 	}
-	err = datagen.SaveData(*testSave, XTest, YTest)
-	if err != nil {
-		return
-	}
+
 }

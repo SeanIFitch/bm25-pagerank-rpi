@@ -10,10 +10,21 @@ import (
 	"rpi-search-ranking/internal/training"
 )
 
+// Current output:
+//
+// Best Lambda: 1.5000, Cross-Validation Accuracy: 67.48%
+// Early stopping at epoch 684
+// Test Accuracy: 67.59%
+// Confusion Matrix:
+//				  Predicted
+//				  1		 -1
+//  Actual	 1	33858	16008
+//			-1	16399	33735
+
 // Train model
 func main() {
-	trainFile := flag.String("trainFile", "", "Path to the train dataset file (e.g., data/processed/MSLR-WEB30K/Fold1/train.txt)")
-	testFile := flag.String("testFile", "", "Path to the test dataset file (e.g., data/processed/MSLR-WEB30K/Fold1/test.txt)")
+	trainFile := flag.String("trainFile", "", "Path to the train dataset file (e.g., data/processed/MSLR-WEB30K/Fold1/train.gob)")
+	testFile := flag.String("testFile", "", "Path to the test dataset file (e.g., data/processed/MSLR-WEB30K/Fold1/test.gob)")
 	flag.Parse()
 
 	// Ensure required file paths are provided
