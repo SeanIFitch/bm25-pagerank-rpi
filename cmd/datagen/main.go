@@ -11,15 +11,15 @@ import (
 // Designed to use data from https://www.microsoft.com/en-us/research/project/mslr/ by Tao Qin and Tie-Yan Liu
 func main() {
 	file := flag.String("file", "", "Path to the train dataset file (e.g., MSLR-WEB30K/Fold1/train.txt)")
-	csvSave := flag.String("csvFile", "", "Path to the file in which to save the file as CSV (e.g., data/processed/MSLR-WEB30K/Fold1/1mil-train.csv)")
-	gobSave := flag.String("gobFile", "", "Path to the file in which to save the file as gob (e.g., data/processed/MSLR-WEB30K/Fold1/1mil-train.gob)")
-	exampleCount := flag.Int("trainCount", 1000000, "Number of examples to save")
+	csvFile := flag.String("csvFile", "", "Path to the file in which to save the file as CSV (e.g., data/processed/MSLR-WEB30K/Fold1/1mil-train.csv)")
+	gobFile := flag.String("gobFile", "", "Path to the file in which to save the file as gob (e.g., data/processed/MSLR-WEB30K/Fold1/1mil-train.gob)")
+	exampleCount := flag.Int("exampleCount", 1000000, "Number of examples to save")
 	minDiff := flag.Int("minDiff", 3, "Minimum relevance difference for a valid example")
 
 	flag.Parse()
 
 	// Ensure required file paths are provided
-	if *file == "" || (*csvSave == "" && *gobSave == "") {
+	if *file == "" || (*csvFile == "" && *gobFile == "") {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -34,16 +34,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *gobSave != "" {
-		err = datagen.SaveData(*gobSave, X, Y)
+	if *gobFile != "" {
+		err = datagen.SaveData(*gobFile, X, Y)
 		if err != nil {
 			return
 		}
-	} else if *csvSave != "" {
-		if err != nil {
-			return
-		}
-		err = datagen.SaveDataToCSV(*csvSave, X, Y)
+	} else if *csvFile != "" {
+		err = datagen.SaveDataToCSV(*csvFile, X, Y)
 		if err != nil {
 			return
 		}
