@@ -52,7 +52,7 @@ func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	// TODO: sort by logistic regression with Timsort
 
 	// Save data for training
-	filename := generateUniqueFilename("data/raw/examples")
+	filename := generateUniqueFilename("../../data/raw/examples")
 	err = saveData(filename, documents)
 	if err != nil {
 		log.Printf("warning: failed to write documents to file: %v\n", err)
