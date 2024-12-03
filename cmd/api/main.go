@@ -10,7 +10,6 @@ import (
 	"rpi-search-ranking/internal/ranking"
 	"syscall"
 	"time"
-
 	"github.com/gorilla/mux"
 	"rpi-search-ranking/internal/api"
 )
@@ -22,8 +21,8 @@ func main() {
 	// Add middleware to log the request
 	r.Use(loggingMiddleware)
 
-	// Define the endpoint
-	r.HandleFunc("/getDocumentScores", getDocumentScores).Methods("POST")
+	// Define the endpoint using GET method
+	r.HandleFunc("/getDocumentScores", getDocumentScores).Methods("GET")
 
 	// Start the server in a goroutine
 	srv := &http.Server{
@@ -33,7 +32,7 @@ func main() {
 
 	// Run the server in a separate goroutine
 	go func() {
-		log.Println("Starting API server on port 8080...")
+		log.Println("Starting Ranking API server on port 8080...")
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatal("Server failed: ", err)
 		}
@@ -66,29 +65,34 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 // Handler function for the /getDocumentScores endpoint
 func getDocumentScores(w http.ResponseWriter, r *http.Request) {
-	// Parse the user query from the request body
-	var query ranking.Query
-	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	// Extract parameters from the URL query string
+	queryId := r.URL.Query().Get("id")
+	queryText := r.URL.Query().Get("text")
 
-	// Validate the query
-	if query.Id == "" || query.Text == "" {
-		http.Error(w, "Id and Text are required", http.StatusBadRequest)
+	// Validate the query parameters
+	if queryId == "" || queryText == "" {
+		sendError(w, http.StatusBadRequest, "Id and Text are required")
 		return
 	}
 
 	// Call the internal function to get document scores
-	docScores, err := api.GetDocumentScores(query)
+	docScores, err := api.GetDocumentScores(ranking.Query{Id: queryId, Text: queryText})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendError(w, http.StatusInternalServerError, "Failed to retrieve document scores")
 		return
 	}
 
 	// Return the document scores as JSON
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(docScores); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendError(w, http.StatusInternalServerError, "Failed to encode response")
 	}
+}
+
+// sendError sends a structured error response
+func sendError(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
