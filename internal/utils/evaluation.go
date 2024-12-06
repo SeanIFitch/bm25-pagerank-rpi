@@ -1,4 +1,4 @@
-package datagen
+package utils
 
 import (
 	"bytes"
@@ -21,24 +21,24 @@ type QueryInfo struct {
 	CacheExists        bool      `json:"cache_exists"`         // Are we implementing a cache?
 }
 
-// Create a evaluation object, everything is initially set to thinging 
-func CreateEvalation( ) *Evaluation {
+// CreateEvalation creates an evaluation object
+func CreateEvalation() *Evaluation {
 	queryData := &QueryInfo{
 		NumDocumentsParsed: 0,
 		NumRankedDocuments: 0,
-		ProcessTime: time.Time{},
-		CacheExists: false,
+		ProcessTime:        time.Time{},
+		CacheExists:        false,
 	}
 
 	return &Evaluation{
-		TotalStorage: byte(0), 
-		AlgorithmRunTime:  time.Time{},
-		QueryData: queryData,
+		TotalStorage:     byte(0),
+		AlgorithmRunTime: time.Time{},
+		QueryData:        queryData,
 	}
 }
 
 // Function serializes the Evaluation object and it's contents to a json string
-func (e *Evaluation)SerializeToJson( ) (string, error) {
+func (e *Evaluation) SerializeToJson() (string, error) {
 	// Marshal the struct into JSON
 	jsonData, err := json.MarshalIndent(e, "", "  ")
 	if err != nil {
@@ -58,7 +58,7 @@ func SendEvaluation(evaluation *Evaluation) error {
 
 	// Replace this with the correct endpoint path later [CHANGE ENDPOINT LATER]
 	serverURL := "https://lspt-data-eval.cs.rpi.edu:8080/endpoint" // Base URL
-	
+
 	// Create a new POST request with JSON data in the body
 	req, err := http.NewRequest("POST", serverURL, bytes.NewBuffer([]byte(jsonStr)))
 	if err != nil {

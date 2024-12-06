@@ -49,7 +49,7 @@ func RankDocuments(query Query, client *http.Client) ([]Document, error) {
 	// Only consider top maxDocuments documents
 	documents = documents[:min(maxDocuments, len(documents))]
 
-	// TODO: sort by logistic regression with Timsort
+	// TODO: sort by pairwise classification on all features
 
 	// Save data for training
 	filename := generateUniqueFilename("../../data/raw/examples")
