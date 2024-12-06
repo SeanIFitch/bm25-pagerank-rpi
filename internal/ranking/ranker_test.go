@@ -26,13 +26,13 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=term1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
                             "term": "term1",
                             "index": [
                                 {"docID": "doc1", "frequency": 1, "positions": [8]}
                             ]
                         }`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
 							"docID": "doc1",
 							"metadata": {
 								"docLength": 100,
@@ -40,14 +40,14 @@ func TestRankDocuments(t *testing.T) {
 								"docType": "PDF",
 								"imageCount": 3,
 								"docTitle": "Introduction to Data Science",
-								"URL": "https://example.com"
+								"URL": "http://example.com"
 							}
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-total-doc-statistics": `{
 							"avgDocLength": 120.0,
 							"docCount": 10
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -67,7 +67,7 @@ func TestRankDocuments(t *testing.T) {
 						FileType:        "PDF",
 						ImageCount:      3,
 						DocTitle:        "Introduction to Data Science",
-						URL:             "https://example.com",
+						URL:             "http://example.com",
 					},
 				},
 			},
@@ -82,14 +82,14 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=term1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
                             "term": "term1",
                             "index": [
                                 {"docID": "doc1", "frequency": 1, "positions": [8]},
 								{"docID": "doc2", "frequency": 2, "positions": [8, 19]}
                             ]
                         }`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
 							"docID": "doc1",
 							"metadata": {
 								"docLength": 100,
@@ -97,10 +97,10 @@ func TestRankDocuments(t *testing.T) {
 								"docType": "PDF",
 								"imageCount": 3,
 								"docTitle": "Introduction to Data Science",
-								"URL": "https://example1.com"
+								"URL": "http://example1.com"
 							}
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc2": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc2": `{
 							"docID": "doc2",
 							"metadata": {
 								"docLength": 100,
@@ -108,19 +108,19 @@ func TestRankDocuments(t *testing.T) {
 								"docType": "PDF",
 								"imageCount": 3,
 								"docTitle": "Introduction to Data Science",
-								"URL": "https://example2.com"
+								"URL": "http://example2.com"
 							}
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-total-doc-statistics": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-total-doc-statistics": `{
 							"avgDocLength": 120.0,
 							"docCount": 10
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example1.com": `{
+						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example1.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
 						}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example2.com": `{
+						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example2.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -140,7 +140,7 @@ func TestRankDocuments(t *testing.T) {
 						FileType:        "PDF",
 						ImageCount:      3,
 						DocTitle:        "Introduction to Data Science",
-						URL:             "https://example2.com",
+						URL:             "http://example2.com",
 					},
 				},
 				{
@@ -152,7 +152,7 @@ func TestRankDocuments(t *testing.T) {
 						FileType:        "PDF",
 						ImageCount:      3,
 						DocTitle:        "Introduction to Data Science",
-						URL:             "https://example1.com",
+						URL:             "http://example1.com",
 					},
 				},
 			},
@@ -167,7 +167,7 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"https://lspt-index-ranking.cs.rpi.edu/get-invertible-index?term=term1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
 							"term": "term1",
 							"index": []
 						}`,

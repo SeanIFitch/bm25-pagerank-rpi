@@ -719,7 +719,7 @@ func TestDocument_calculateFeatures(t *testing.T) {
 			fields: fields{
 				Metadata: DocumentMetadata{
 					DocLength: 100,
-					URL:       "https://example.com",
+					URL:       "http://example.com",
 				},
 				TermFrequencies: map[string]int{
 					"term1": 2,
@@ -738,7 +738,7 @@ func TestDocument_calculateFeatures(t *testing.T) {
 				avgDocLength: 120.0,
 				client: createMockHTTPClient(
 					map[string]string{
-						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -843,12 +843,12 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"https://lspt-index-ranking.cs.rpi.edu/get-pagerank?URL=https://example.com": `{
+						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
 											"pageRank": 0.85,
 											"inLinkCount": 123,
 											"outLinkCount": 45
 										}`,
-						"https://lspt-index-ranking.cs.rpi.edu/get-document-metadata?docID=doc1": `{
+						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
 											"docID": "12345",
 											"metadata": {
 												"docLength": 100,
@@ -856,7 +856,7 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 												"docType": "PDF",
 												"imageCount": 3,
 												"docTitle": "Introduction to Data Science",
-												"URL": "https://example.com"
+												"URL": "http://example.com"
 											}
 										}`,
 					},
@@ -904,7 +904,7 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 						FileType:        "PDF",
 						ImageCount:      3,
 						DocTitle:        "Introduction to Data Science",
-						URL:             "https://example.com",
+						URL:             "http://example.com",
 					},
 				},
 			},

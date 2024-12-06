@@ -13,7 +13,7 @@ all: build
 .PHONY: test
 test:
 	@echo "Running all tests..."
-	go test -v -cover ./...
+	@go test -v -cover ./... | grep -v "\--- PASS:"
 
 # Build the binaries for the API
 .PHONY: build
