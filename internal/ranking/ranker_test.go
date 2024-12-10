@@ -26,13 +26,13 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
+						InvertibleIndexEndpoint + "term1": `{
                             "term": "term1",
                             "index": [
                                 {"docID": "doc1", "frequency": 1, "positions": [8]}
                             ]
                         }`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
+						MetadataEndpoint + "doc1": `{
 							"docID": "doc1",
 							"metadata": {
 								"docLength": 100,
@@ -43,11 +43,11 @@ func TestRankDocuments(t *testing.T) {
 								"URL": "http://example.com"
 							}
 						}`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-total-doc-statistics": `{
+						StatisticsEndpoint: `{
 							"avgDocLength": 120.0,
 							"docCount": 10
 						}`,
-						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
+						PagerankEndpoint + "https://example.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -82,14 +82,14 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
+						InvertibleIndexEndpoint + "term1": `{
                             "term": "term1",
                             "index": [
                                 {"docID": "doc1", "frequency": 1, "positions": [8]},
 								{"docID": "doc2", "frequency": 2, "positions": [8, 19]}
                             ]
                         }`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
+						MetadataEndpoint + "doc1": `{
 							"docID": "doc1",
 							"metadata": {
 								"docLength": 100,
@@ -100,7 +100,7 @@ func TestRankDocuments(t *testing.T) {
 								"URL": "http://example1.com"
 							}
 						}`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc2": `{
+						MetadataEndpoint + "doc2": `{
 							"docID": "doc2",
 							"metadata": {
 								"docLength": 100,
@@ -111,16 +111,16 @@ func TestRankDocuments(t *testing.T) {
 								"URL": "http://example2.com"
 							}
 						}`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-total-doc-statistics": `{
+						StatisticsEndpoint: `{
 							"avgDocLength": 120.0,
 							"docCount": 10
 						}`,
-						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example1.com": `{
+						PagerankEndpoint + "https://example1.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
 						}`,
-						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example2.com": `{
+						PagerankEndpoint + "https://example2.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -167,7 +167,7 @@ func TestRankDocuments(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-invertible-index?term=term1": `{
+						InvertibleIndexEndpoint + "term1": `{
 							"term": "term1",
 							"index": []
 						}`,

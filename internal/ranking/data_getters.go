@@ -162,7 +162,12 @@ func fetchPageRank(client *http.Client, url string) (PageRankInfo, error) {
 
 	// Ensure the response status code is OK (200)
 	if resp.StatusCode != http.StatusOK {
-		return PageRankInfo{}, fmt.Errorf("failed to fetch PageRank info: %v", resp.Status)
+		// Read the response body to include raw JSON in the error
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return PageRankInfo{}, fmt.Errorf("failed to fetch PageRank info: %v, and failed to read response body: %v", resp.Status, readErr)
+		}
+		return PageRankInfo{}, fmt.Errorf("failed to fetch PageRank info: %v, response body: %s", resp.Status, string(bodyBytes))
 	}
 
 	// Decode the JSON response from the API into a struct

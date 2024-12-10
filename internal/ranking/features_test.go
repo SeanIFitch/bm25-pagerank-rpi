@@ -738,7 +738,7 @@ func TestDocument_calculateFeatures(t *testing.T) {
 				avgDocLength: 120.0,
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
+						PagerankEndpoint + "https://example.com": `{
 							"pageRank": 0.85,
 							"inLinkCount": 123,
 							"outLinkCount": 45
@@ -843,22 +843,22 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 				},
 				client: createMockHTTPClient(
 					map[string]string{
-						"http://lspt-link-analysis.cs.rpi.edu:1234/ranking/https://example.com": `{
-											"pageRank": 0.85,
-											"inLinkCount": 123,
-											"outLinkCount": 45
-										}`,
-						"http://lspt-index-ranking.cs.rpi.edu:8080/get-document-metadata?docID=doc1": `{
-											"docID": "12345",
-											"metadata": {
-												"docLength": 100,
-												"timeLastUpdated": "2024-11-09T15:30:00Z",
-												"docType": "PDF",
-												"imageCount": 3,
-												"docTitle": "Introduction to Data Science",
-												"URL": "http://example.com"
-											}
-										}`,
+						PagerankEndpoint + "http://example.com": `{
+												"pageRank": 0.85,
+												"inLinkCount": 123,
+												"outLinkCount": 45
+											}`,
+						MetadataEndpoint + "doc1": `{
+												"docID": "12345",
+												"metadata": {
+													"docLength": 100,
+													"timeLastUpdated": "2024-11-09T15:30:00Z",
+													"docType": "PDF",
+													"imageCount": 3,
+													"docTitle": "Introduction to Data Science",
+													"URL": "http://example.com"
+												}
+											}`,
 					},
 					map[string]error{}, // No errors
 					http.StatusOK,      // Status OK
@@ -893,7 +893,7 @@ func TestDocuments_initializeFeatures(t *testing.T) {
 						VarianceTFIDF:                    stat.PopVariance([]float64{2.0 * math.Log(5.0/(2.0+1.0)), 10.0 * math.Log(5.0/(1.0+1.0)), 0.0}, nil),
 						BM25:                             math.Log(5.0/(2.0+1.0))*((2*(k1+1))/(2+k1*((1-b)+b*(100.0/120.0)))) + math.Log(5.0/(1.0+1.0))*((10*(k1+1))/(10+k1*((1-b)+b*(100.0/120.0)))),
 						NumSlashesInURL:                  2,
-						LengthOfURL:                      19,
+						LengthOfURL:                      18,
 						InlinkCount:                      123,
 						OutlinkCount:                     45,
 						PageRank:                         0.85,
