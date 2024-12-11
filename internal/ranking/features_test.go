@@ -719,7 +719,7 @@ func TestDocument_calculateFeatures(t *testing.T) {
 			fields: fields{
 				Metadata: DocumentMetadata{
 					DocLength: 100,
-					URL:       "http://example.com",
+					URL:       "https://example.com",
 				},
 				TermFrequencies: map[string]int{
 					"term1": 2,
